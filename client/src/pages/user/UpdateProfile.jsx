@@ -9,11 +9,17 @@ import {
   updatePassFailure,
 } from "../../redux/user/userSlice";
 
+// ShadCN UI
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
 const UpdateProfile = () => {
-  const { currentUser, loading, error } = useSelector((state) => state.user);
+  const { currentUser, loading } = useSelector((state) => state.user);
   const dispatch = useDispatch();
-  const [updateProfileDetailsPanel, setUpdateProfileDetailsPanel] =
-    useState(true);
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -21,13 +27,14 @@ const UpdateProfile = () => {
     phone: "",
     avatar: "",
   });
+
   const [updatePassword, setUpdatePassword] = useState({
     oldpassword: "",
     newpassword: "",
   });
 
   useEffect(() => {
-    if (currentUser !== null) {
+    if (currentUser) {
       setFormData({
         username: currentUser.username,
         email: currentUser.email,
@@ -38,19 +45,11 @@ const UpdateProfile = () => {
     }
   }, [currentUser]);
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value,
-    });
-  };
+  const handleChange = (e) =>
+    setFormData({ ...formData, [e.target.id]: e.target.value });
 
-  const handlePass = (e) => {
-    setUpdatePassword({
-      ...updatePassword,
-      [e.target.id]: e.target.value,
-    });
-  };
+  const handlePass = (e) =>
+    setUpdatePassword({ ...updatePassword, [e.target.id]: e.target.value });
 
   const updateUserDetails = async (e) => {
     e.preventDefault();
@@ -60,33 +59,27 @@ const UpdateProfile = () => {
       currentUser.address === formData.address &&
       currentUser.phone === formData.phone
     ) {
-      alert("Change atleast 1 field to update details");
+      alert("Change at least 1 field to update details");
       return;
     }
     try {
       dispatch(updateUserStart());
       const res = await fetch(`/api/user/update/${currentUser._id}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      if (data.success === false && res.status !== 201 && res.status !== 200) {
-        dispatch(updateUserSuccess());
-        dispatch(updateUserFailure(data?.messsage));
+
+      if (!data.success && res.status !== 200 && res.status !== 201) {
+        dispatch(updateUserFailure(data?.message));
         alert("Session Ended! Please login again");
-        navigate("/login");
         return;
       }
-      if (data.success && res.status === 201) {
-        alert(data?.message);
+      if (data.success) {
         dispatch(updateUserSuccess(data?.user));
-        return;
+        alert(data?.message);
       }
-      alert(data?.message);
-      return;
     } catch (error) {
       console.log(error);
     }
@@ -94,10 +87,7 @@ const UpdateProfile = () => {
 
   const updateUserPassword = async (e) => {
     e.preventDefault();
-    if (
-      updatePassword.oldpassword === "" ||
-      updatePassword.newpassword === ""
-    ) {
+    if (!updatePassword.oldpassword || !updatePassword.newpassword) {
       alert("Enter a valid password");
       return;
     }
@@ -109,155 +99,108 @@ const UpdateProfile = () => {
       dispatch(updatePassStart());
       const res = await fetch(`/api/user/update-password/${currentUser._id}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatePassword),
       });
       const data = await res.json();
-      if (data.success === false && res.status !== 201 && res.status !== 200) {
-        dispatch(updateUserSuccess());
+
+      if (!data.success && res.status !== 200 && res.status !== 201) {
         dispatch(updatePassFailure(data?.message));
         alert("Session Ended! Please login again");
-        navigate("/login");
         return;
       }
       dispatch(updatePassSuccess());
       alert(data?.message);
-      setUpdatePassword({
-        oldpassword: "",
-        newpassword: "",
-      });
-      return;
+      setUpdatePassword({ oldpassword: "", newpassword: "" });
     } catch (error) {
       console.log(error);
     }
   };
 
   return (
-    <div
-      className={`updateProfile w-full p-3 m-1 transition-all duration-300 flex justify-center`}
-    >
-      {updateProfileDetailsPanel === true ? (
-        <div className="flex flex-col border self-center border-black rounded-lg p-2 w-72 h-fit gap-2 sm:w-[320px]">
-          <h1 className="text-2xl text-center font-semibold">Update Profile</h1>
-          <div className="flex flex-col">
-            <label htmlFor="username" className="font-semibold">
-              Username:
-            </label>
-            <input
-              type="text"
-              id="username"
-              className="p-1 rounded border border-black"
-              value={formData.username}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="email" className="font-semibold">
-              Email:
-            </label>
-            <input
-              type="email"
-              id="email"
-              className="p-1 rounded border border-black"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="address" className="font-semibold">
-              Address:
-            </label>
-            <textarea
-              maxLength={200}
-              type="text"
-              id="address"
-              className="p-1 rounded border border-black resize-none"
-              value={formData.address}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="phone" className="font-semibold">
-              Phone:
-            </label>
-            <input
-              type="text"
-              id="phone"
-              className="p-1 rounded border border-black"
-              value={formData.phone}
-              onChange={handleChange}
-            />
-          </div>
-          <button
-            disabled={loading}
-            onClick={updateUserDetails}
-            className="p-2 text-white bg-slate-700 rounded hover:opacity-95"
-          >
-            {loading ? "Loading..." : "Update"}
-          </button>
-          <button
-            disabled={loading}
-            type="button"
-            onClick={() => setUpdateProfileDetailsPanel(false)}
-            className="p-2 text-white bg-red-700 rounded hover:opacity-95"
-          >
-            {loading ? "Loading..." : "Change Password"}
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col border border-black rounded-lg p-2 w-72 h-fit gap-2 sm:w-[320px]">
-          <h1 className="text-2xl text-center font-semibold">
-            Change Password
-          </h1>
-          <div className="flex flex-col">
-            <label htmlFor="username" className="font-semibold">
-              Enter old password:
-            </label>
-            <input
-              type="text"
-              id="oldpassword"
-              className="p-1 rounded border border-black"
-              value={updatePassword.oldpassword}
-              onChange={handlePass}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="username" className="font-semibold">
-              Enter new password:
-            </label>
-            <input
-              type="text"
-              id="newpassword"
-              className="p-1 rounded border border-black"
-              value={updatePassword.newpassword}
-              onChange={handlePass}
-            />
-          </div>
-          <button
-            disabled={loading}
-            onClick={updateUserPassword}
-            className="p-2 text-white bg-slate-700 rounded hover:opacity-95"
-          >
-            {loading ? "Loading..." : "Update Password"}
-          </button>
-          <button
-            disabled={loading}
-            onClick={() => {
-              setUpdateProfileDetailsPanel(true);
-              setUpdatePassword({
-                oldpassword: "",
-                newpassword: "",
-              });
-            }}
-            type="button"
-            className="p-2 text-white bg-red-700 rounded hover:opacity-95 w-24"
-          >
-            {loading ? "Loading..." : "Back"}
-          </button>
-        </div>
-      )}
+    <div className="w-full flex justify-center p-4">
+      <Tabs defaultValue="profile" className="w-full max-w-md">
+        <TabsList className="grid grid-cols-2 mb-4">
+          <TabsTrigger value="profile">Update Profile</TabsTrigger>
+          <TabsTrigger value="password">Change Password</TabsTrigger>
+        </TabsList>
+
+        {/* Update Profile */}
+        <TabsContent value="profile">
+          <Card>
+            <CardHeader>
+              <CardTitle>Update Profile</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                id="username"
+                placeholder="Username"
+                value={formData.username}
+                onChange={handleChange}
+              />
+              <Input
+                id="email"
+                type="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+              <Textarea
+                id="address"
+                placeholder="Address"
+                value={formData.address}
+                onChange={handleChange}
+              />
+              <Input
+                id="phone"
+                type="text"
+                placeholder="Phone"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+              <Button
+                disabled={loading}
+                onClick={updateUserDetails}
+                className="w-full"
+              >
+                {loading ? "Updating..." : "Update"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Change Password */}
+        <TabsContent value="password">
+          <Card>
+            <CardHeader>
+              <CardTitle>Change Password</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input
+                id="oldpassword"
+                type="password"
+                placeholder="Enter old password"
+                value={updatePassword.oldpassword}
+                onChange={handlePass}
+              />
+              <Input
+                id="newpassword"
+                type="password"
+                placeholder="Enter new password"
+                value={updatePassword.newpassword}
+                onChange={handlePass}
+              />
+              <Button
+                disabled={loading}
+                onClick={updateUserPassword}
+                className="w-full"
+              >
+                {loading ? "Updating..." : "Update Password"}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

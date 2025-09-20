@@ -23,6 +23,7 @@ const AddPackages = () => {
     packageOffer: false,
     packageImages: [],
   });
+
   const [images, setImages] = useState([]);
   const [imageUploadError, setImageUploadError] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -37,6 +38,33 @@ const AddPackages = () => {
     }
   };
 
+  // ✅ Cloudinary Upload Function
+  const storeImage = async (file) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("upload_preset", "travel-image"); // your unsigned preset
+`        // fd.append("folder", "icefoss"); // optional folder in cloudinary
+`
+        const res = await fetch(
+          "https://api.cloudinary.com/v1_1/dpkippjxy/image/upload",
+          {
+            method: "POST",
+            body: fd,
+          }
+        );
+
+        if (!res.ok) return reject("Upload failed");
+
+        const data = await res.json();
+        resolve(data.secure_url); // ✅ Cloudinary image URL
+      } catch (err) {
+        reject(err);
+      }
+    });
+  };
+
   const handleImageSubmit = () => {
     if (
       images.length > 0 &&
@@ -49,6 +77,7 @@ const AddPackages = () => {
       for (let i = 0; i < images.length; i++) {
         promises.push(storeImage(images[i]));
       }
+
       Promise.all(promises)
         .then((urls) => {
           setFormData({
@@ -59,38 +88,14 @@ const AddPackages = () => {
           setUploading(false);
         })
         .catch((err) => {
-          setImageUploadError("Image upload failed (2mb max per image)");
+          console.error(err);
+          setImageUploadError("Image upload failed (check size/format)");
           setUploading(false);
         });
     } else {
       setImageUploadError("You can only upload 5 images per package");
       setUploading(false);
     }
-  };
-
-  const storeImage = async (file) => {
-    return new Promise((resolve, reject) => {
-      const storage = getStorage(app);
-      const fileName = new Date().getTime() + file.name.replace(/\s/g, "");
-      const storageRef = ref(storage, fileName);
-      const uploadTask = uploadBytesResumable(storageRef, file);
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress =
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setImageUploadPercent(Math.floor(progress));
-        },
-        (error) => {
-          reject(error);
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            resolve(downloadURL);
-          });
-        }
-      );
-    });
   };
 
   const handleDeleteImage = (index) => {
@@ -102,10 +107,6 @@ const AddPackages = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // if (formData.packageImages.length === 0) {
-    //   alert("You must upload atleast 1 image");
-    //   return;
-    // }
     if (
       formData.packageName === "" ||
       formData.packageDescription === "" ||
@@ -119,7 +120,7 @@ const AddPackages = () => {
       alert("All fields are required!");
       return;
     }
-    if (formData.packagePrice < 0) {
+    if (formData.packagePrice < 500) {
       alert("Price should be greater than 500!");
       return;
     }
@@ -130,7 +131,7 @@ const AddPackages = () => {
     if (formData.packageOffer === false) {
       setFormData({ ...formData, packageDiscountPrice: 0 });
     }
-    // console.log(formData);
+
     try {
       setLoading(true);
       setError(false);
@@ -142,14 +143,17 @@ const AddPackages = () => {
         },
         body: JSON.stringify(formData),
       });
+
       const data = await res.json();
       if (data?.success === false) {
         setError(data?.message);
         setLoading(false);
       }
+
       setLoading(false);
       setError(false);
       alert(data?.message);
+
       setFormData({
         packageName: "",
         packageDescription: "",
@@ -170,7 +174,6 @@ const AddPackages = () => {
       console.log(err);
     }
   };
-
   return (
     <>
       <div className="w-full flex justify-center p-3">
@@ -335,7 +338,7 @@ const AddPackages = () => {
             disabled={uploading || loading}
             className="bg-green-700 p-3 rounded text-white hover:opacity-95 disabled:opacity-80 w-full"
             type="button"
-            // onClick={handleImageSubmit}
+            onClick={handleImageSubmit}
           >
             {uploading
               ? `Uploading...(${imageUploadPercent}%)`

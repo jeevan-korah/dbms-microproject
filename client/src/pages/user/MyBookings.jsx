@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MyBookings = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -59,55 +70,77 @@ const MyBookings = () => {
 
   return (
     <div className="w-full flex justify-center">
-      <div className="w-[95%] shadow-xl rounded-lg p-3 flex flex-col gap-2">
-        {loading && <h1 className="text-center text-2xl">Loading...</h1>}
-        {error && <h1 className="text-center text-2xl">{error}</h1>}
-        <div className="w-full border-b-4">
-          <input
-            className="border rounded-lg p-2 mb-2"
-            type="text"
-            placeholder="Search"
+      <Card className="w-[95%] shadow-xl rounded-lg">
+        <CardHeader>
+          <CardTitle>My Bookings</CardTitle>
+          <CardDescription>
+            View and manage all your active bookings
+          </CardDescription>
+          <Input
+            className="mt-2"
+            placeholder="Search bookings..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-            }}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-        </div>
-        {!loading &&
-          currentBookings &&
-          currentBookings.map((booking, i) => {
-            return (
-              <div
-                className="w-full border-y-2 p-3 flex flex-wrap overflow-auto gap-3 items-center justify-between"
+        </CardHeader>
+
+        <CardContent>
+          {loading && (
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-12 w-full rounded-md" />
+              <Skeleton className="h-12 w-full rounded-md" />
+            </div>
+          )}
+          {error && <p className="text-red-600">{error}</p>}
+
+          {!loading && currentBookings?.length === 0 && (
+            <p className="text-muted-foreground text-center py-6">
+              No bookings found
+            </p>
+          )}
+
+          <ScrollArea className="h-[400px] pr-3">
+            {currentBookings.map((booking, i) => (
+              <Card
                 key={i}
+                className="mb-3 border p-3 flex flex-wrap items-center justify-between gap-3"
               >
-                <Link to={`/package/${booking?.packageDetails?._id}`}>
+                <Link
+                  to={`/package/${booking?.packageDetails?._id}`}
+                  className="flex items-center gap-3"
+                >
                   <img
-                    className="w-12 h-12"
+                    className="w-16 h-16 object-cover rounded-md"
                     src={booking?.packageDetails?.packageImages[0]}
-                    alt="Package Image"
+                    alt="Package"
                   />
-                </Link>
-                <Link to={`/package/${booking?.packageDetails?._id}`}>
-                  <p className="hover:underline">
+                  <p className="hover:underline font-medium">
                     {booking?.packageDetails?.packageName}
                   </p>
                 </Link>
-                <p>{booking?.buyer?.username}</p>
-                <p>{booking?.buyer?.email}</p>
-                <p>{booking?.date}</p>
-                <button
-                  onClick={() => {
-                    handleCancel(booking._id);
-                  }}
-                  className="p-2 rounded bg-red-600 text-white hover:opacity-95"
-                >
-                  Cancel
-                </button>
-              </div>
-            );
-          })}
-      </div>
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {booking?.buyer?.username}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {booking?.buyer?.email}
+                    </p>
+                  </div>
+                  <p className="text-sm">{booking?.date}</p>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleCancel(booking._id)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
 };

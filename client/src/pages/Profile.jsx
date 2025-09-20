@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   updateUserStart,
   updateUserSuccess,
@@ -23,14 +23,31 @@ import MyBookings from "./user/MyBookings";
 import UpdateProfile from "./user/UpdateProfile";
 import MyHistory from "./user/MyHistory";
 
+// Shadcn components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+
 const Profile = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const fileRef = useRef(null);
-  const { currentUser, loading, error } = useSelector((state) => state.user);
+  const { currentUser, loading } = useSelector((state) => state.user);
   const [profilePhoto, setProfilePhoto] = useState(undefined);
   const [photoPercentage, setPhotoPercentage] = useState(0);
-  const [activePanelId, setActivePanelId] = useState(1);
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -40,7 +57,7 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    if (currentUser !== null) {
+    if (currentUser) {
       setFormData({
         username: currentUser.username,
         email: currentUser.email,
@@ -56,7 +73,7 @@ const Profile = () => {
       dispatch(updateUserStart());
       const storage = getStorage(app);
       const photoname = new Date().getTime() + photo.name.replace(/\s/g, "");
-      const storageRef = ref(storage, `profile-photos/${photoname}`); //profile-photos - folder name in firebase
+      const storageRef = ref(storage, `profile-photos/${photoname}`);
       const uploadTask = uploadBytesResumable(storageRef, photo);
 
       uploadTask.on(
@@ -65,7 +82,6 @@ const Profile = () => {
           const progress = Math.floor(
             (snapshot.bytesTransferred / snapshot.totalBytes) * 100
           );
-          //   console.log(progress);
           setPhotoPercentage(progress);
         },
         (error) => {
@@ -77,24 +93,18 @@ const Profile = () => {
               `/api/user/update-profile-photo/${currentUser._id}`,
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": " application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ avatar: downloadUrl }),
               }
             );
             const data = await res.json();
             if (data?.success) {
-              alert(data?.message);
               setFormData({ ...formData, avatar: downloadUrl });
               dispatch(updateUserSuccess(data?.user));
               setProfilePhoto(null);
-              return;
             } else {
               dispatch(updateUserFailure(data?.message));
             }
-            dispatch(updateUserFailure(data?.message));
-            alert(data?.message);
           });
         }
       );
@@ -108,194 +118,144 @@ const Profile = () => {
       dispatch(logOutStart());
       const res = await fetch("/api/auth/logout");
       const data = await res.json();
-      if (data?.success !== true) {
+      if (!data?.success) {
         dispatch(logOutFailure(data?.message));
         return;
       }
       dispatch(logOutSuccess());
       navigate("/login");
-      alert(data?.message);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const handleDeleteAccount = async (e) => {
-    e.preventDefault();
-    const CONFIRM = confirm(
-      "Are you sure ? the account will be permenantly deleted!"
-    );
-    if (CONFIRM) {
-      try {
-        dispatch(deleteUserAccountStart());
-        const res = await fetch(`/api/user/delete/${currentUser._id}`, {
-          method: "DELETE",
-        });
-        const data = await res.json();
-        if (data?.success === false) {
-          dispatch(deleteUserAccountFailure(data?.message));
-          alert("Something went wrong!");
-          return;
-        }
-        dispatch(deleteUserAccountSuccess());
-        alert(data?.message);
-      } catch (error) {}
+  const handleDeleteAccount = async () => {
+    try {
+      dispatch(deleteUserAccountStart());
+      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data?.success === false) {
+        dispatch(deleteUserAccountFailure(data?.message));
+        return;
+      }
+      dispatch(deleteUserAccountSuccess());
+      navigate("/register");
+    } catch (error) {
+      console.log(error);
     }
   };
 
+  if (!currentUser) {
+    return <p className="text-red-600 text-center mt-10">Please login first</p>;
+  }
+
   return (
-    <div className="flex w-full flex-wrap max-sm:flex-col p-2">
-      {currentUser ? (
-        <>
-          <div className="w-[40%] p-3 max-sm:w-full">
-            <div className="flex flex-col items-center gap-4 p-3">
-              <div className="w-full flex flex-col items-center relative">
-                <img
-                  src={
-                    (profilePhoto && URL.createObjectURL(profilePhoto)) ||
-                    formData.avatar
-                  }
-                  alt="Profile photo"
-                  className="w-64 min-h-52 max-h-64 rounded-lg"
-                  onClick={() => fileRef.current.click()}
-                  onMouseOver={() => {
-                    document
-                      .getElementById("photoLabel")
-                      .classList.add("block");
-                  }}
-                  onMouseOut={() => {
-                    document
-                      .getElementById("photoLabel")
-                      .classList.remove("block");
-                  }}
-                />
-                <input
-                  type="file"
-                  name="photo"
-                  id="photo"
-                  hidden
-                  ref={fileRef}
-                  accept="image/*"
-                  onChange={(e) => setProfilePhoto(e.target.files[0])}
-                />
-                <label
-                  htmlFor="photo"
-                  id="photoLabel"
-                  className="w-64 bg-slate-300 absolute bottom-0 p-2 text-center text-lg text-white font-semibold rounded-b-lg"
-                  hidden
-                >
-                  Choose Photo
-                </label>
-              </div>
-              {profilePhoto && (
-                <div className="flex w-full justify-between gap-1">
-                  <button
-                    onClick={() => handleProfilePhoto(profilePhoto)}
-                    className="bg-green-700 p-2 text-white mt-3 flex-1 hover:opacity-90"
-                  >
-                    {loading ? `Uploading...(${photoPercentage}%)` : "Upload"}
-                  </button>
-                </div>
-              )}
-              <p
-                style={{
-                  width: "100%",
-                  borderBottom: "1px solid black",
-                  lineHeight: "0.1em",
-                  margin: "10px",
-                }}
-              >
-                <span className="font-semibold" style={{ background: "#fff" }}>
-                  Details
-                </span>
-              </p>
-              {/* <button
-                onClick={handleLogout}
-                className="text-red-600 text-lg font-semibold self-start border border-red-600 p-1 rounded-lg hover:bg-red-600 hover:text-white"
-              >
-                Log-out
-              </button> */}
-              <div className="w-full flex justify-between px-1">
-                <button
-                  onClick={handleLogout}
-                  className="text-red-600 text-lg font-semibold self-start border border-red-600 p-1 rounded-lg hover:bg-red-600 hover:text-white"
-                >
-                  Log-out
-                </button>
-                <button
-                  onClick={() => setActivePanelId(3)}
-                  className="text-white text-lg self-end bg-gray-500 p-1 rounded-lg hover:bg-gray-700"
-                >
-                  Edit Profile
-                </button>
-              </div>
-              <div className="w-full shadow-2xl rounded-lg p-3 break-all">
-                <p className="text-3xl font-semibold m-1">
-                  Hi {currentUser.username} !
-                </p>
-                <p className="text-lg font-semibold">
-                  Email:{currentUser.email}
-                </p>
-                <p className="text-lg font-semibold">
-                  Phone:{currentUser.phone}
-                </p>
-                <p className="text-lg font-semibold">
-                  Address:{currentUser.address}
-                </p>
-              </div>
-              <button
-                onClick={handleDeleteAccount}
-                className="text-red-600 hover:underline"
-              >
-                Delete account
-              </button>
-            </div>
+    <div className="container mx-auto py-8 px-4 flex flex-col md:flex-row gap-6">
+      {/* Left Column */}
+      <Card className="w-full md:w-1/3">
+        <CardHeader className="flex flex-col items-center">
+          <Avatar
+            className="h-28 w-28 cursor-pointer"
+            onClick={() => fileRef.current.click()}
+          >
+            <AvatarImage
+              src={
+                (profilePhoto && URL.createObjectURL(profilePhoto)) ||
+                formData.avatar
+              }
+              alt={formData.username}
+            />
+            <AvatarFallback>{formData.username.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <input
+            type="file"
+            ref={fileRef}
+            hidden
+            accept="image/*"
+            onChange={(e) => setProfilePhoto(e.target.files[0])}
+          />
+          <CardTitle className="mt-3">{formData.username}</CardTitle>
+          <p className="text-sm text-gray-500">{formData.email}</p>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {profilePhoto && (
+            <Button
+              className="w-full"
+              onClick={() => handleProfilePhoto(profilePhoto)}
+              disabled={loading}
+            >
+              {loading ? `Uploading... (${photoPercentage}%)` : "Upload Photo"}
+            </Button>
+          )}
+
+          <Separator />
+
+          <div className="space-y-1 text-sm">
+            <p>
+              <span className="font-semibold">Phone:</span> {formData.phone}
+            </p>
+            <p>
+              <span className="font-semibold">Address:</span> {formData.address}
+            </p>
           </div>
-          {/* ---------------------------------------------------------------------------------------- */}
-          <div className="w-[60%] max-sm:w-full">
-            <div>
-              <nav className="w-full border-blue-500 border-b-4">
-                <div className="w-full flex gap-2">
-                  <button
-                    className={
-                      activePanelId === 1
-                        ? "p-1 rounded-t transition-all duration-300 bg-blue-500 text-white"
-                        : "p-1 rounded-t transition-all duration-300"
-                    }
-                    id="bookings"
-                    onClick={() => setActivePanelId(1)}
-                  >
-                    Bookings
-                  </button>
-                  <button
-                    className={
-                      activePanelId === 2
-                        ? "p-1 rounded-t transition-all duration-300 bg-blue-500 text-white"
-                        : "p-1 rounded-t transition-all duration-300"
-                    }
-                    id="updateProfile"
-                    onClick={() => setActivePanelId(2)}
-                  >
-                    History
-                  </button>
-                </div>
-              </nav>
-              {/* bookings */}
-              <div className="main flex flex-wrap">
-                {activePanelId === 1 && <MyBookings />}
-                {/* History */}
-                {activePanelId === 2 && <MyHistory />}
-                {/* Update profile */}
-                {activePanelId === 3 && <UpdateProfile />}
-              </div>
-            </div>
+
+          <div className="flex justify-between pt-4">
+            <Button variant="destructive" onClick={handleLogout}>
+              Logout
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline">Delete Account</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Account?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. Your account and data will be
+                    permanently deleted.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteAccount}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
-        </>
-      ) : (
-        <div>
-          <p className="text-red-700">Login First</p>
-        </div>
-      )}
+        </CardContent>
+      </Card>
+
+      {/* Right Column */}
+      <Card className="w-full md:w-2/3">
+        <CardHeader>
+          <CardTitle>My Dashboard</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="bookings">
+            <TabsList className="grid grid-cols-3 w-full">
+              <TabsTrigger value="bookings">Bookings</TabsTrigger>
+              <TabsTrigger value="history">History</TabsTrigger>
+              <TabsTrigger value="update">Edit Profile</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="bookings">
+              <MyBookings />
+            </TabsContent>
+            <TabsContent value="history">
+              <MyHistory />
+            </TabsContent>
+            <TabsContent value="update">
+              <UpdateProfile />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

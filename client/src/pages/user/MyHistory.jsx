@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const MyHistory = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -58,59 +62,77 @@ const MyHistory = () => {
 
   return (
     <div className="w-full flex justify-center">
-      <div className="w-[95%] shadow-xl rounded-lg p-3 flex flex-col gap-2">
-        <h1 className="text-center text-2xl">History</h1>
-        {loading && <h1 className="text-center text-2xl">Loading...</h1>}
-        {error && <h1 className="text-center text-2xl">{error}</h1>}
-        <div className="w-full border-b-4">
-          <input
-            className="border rounded-lg p-2 mb-2"
-            type="text"
-            placeholder="Search"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-            }}
-          />
-        </div>
-        {!loading &&
-          allBookings &&
-          allBookings.map((booking, i) => {
-            return (
-              <div
-                className="w-full border-y-2 p-3 flex flex-wrap overflow-auto gap-3 items-center justify-between"
-                key={i}
-              >
-                <Link to={`/package/${booking?.packageDetails?._id}`}>
-                  <img
-                    className="w-12 h-12"
-                    src={booking?.packageDetails?.packageImages[0]}
-                    alt="Package Image"
-                  />
-                </Link>
-                <Link to={`/package/${booking?.packageDetails?._id}`}>
-                  <p className="hover:underline">
-                    {booking?.packageDetails?.packageName}
-                  </p>
-                </Link>
-                <p>{booking?.buyer?.username}</p>
-                <p>{booking?.buyer?.email}</p>
-                <p>{booking?.date}</p>
-                {(new Date(booking?.date).getTime() < new Date().getTime() ||
-                  booking?.status === "Cancelled") && (
-                  <button
-                    onClick={() => {
-                      handleHistoryDelete(booking._id);
-                    }}
-                    className="p-2 rounded bg-red-600 text-white hover:opacity-95"
-                  >
-                    Delete
-                  </button>
-                )}
-              </div>
-            );
-          })}
-      </div>
+      <Card className="w-[95%] shadow-xl rounded-lg p-3">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl font-semibold">
+            History
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {loading && <p className="text-center text-lg">Loading...</p>}
+          {error && <p className="text-center text-lg text-red-600">{error}</p>}
+
+          {/* Search Bar */}
+          <div className="w-full border-b pb-2">
+            <Input
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* Scrollable Bookings */}
+          <ScrollArea className="h-[400px] pr-2">
+            {allBookings && allBookings.length > 0 ? (
+              allBookings.map((booking, i) => (
+                <Card
+                  key={i}
+                  className="mb-3 flex items-center justify-between gap-3 p-3"
+                >
+                  {/* Package Image */}
+                  <Link to={`/package/${booking?.packageDetails?._id}`}>
+                    <img
+                      className="w-16 h-16 rounded-md object-cover"
+                      src={booking?.packageDetails?.packageImages[0]}
+                      alt="Package"
+                    />
+                  </Link>
+
+                  {/* Package Info */}
+                  <div className="flex-1">
+                    <Link
+                      to={`/package/${booking?.packageDetails?._id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {booking?.packageDetails?.packageName}
+                    </Link>
+                    <p className="text-sm text-muted-foreground">
+                      {booking?.buyer?.username} ({booking?.buyer?.email})
+                    </p>
+                    <p className="text-sm">{booking?.date}</p>
+                  </div>
+
+                  {/* Delete Button */}
+                  {(new Date(booking?.date).getTime() < new Date().getTime() ||
+                    booking?.status === "Cancelled") && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleHistoryDelete(booking._id)}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Card>
+              ))
+            ) : (
+              <p className="text-center text-muted-foreground">
+                No history found
+              </p>
+            )}
+          </ScrollArea>
+        </CardContent>
+      </Card>
     </div>
   );
 };

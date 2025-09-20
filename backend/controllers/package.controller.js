@@ -39,9 +39,8 @@ export const createPackage = async (req, res) => {
       !packageTransportation ||
       !packageMeals ||
       !packageActivities ||
-      !packageOffer === ""
-      // ||
-      // !packageImages
+      !packageOffer === "" ||
+      !packageImages
     ) {
       return res.status(200).send({
         success: false,

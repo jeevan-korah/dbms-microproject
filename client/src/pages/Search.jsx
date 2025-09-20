@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PackageCard from "./PackageCard";
-
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 const Search = () => {
   const navigate = useNavigate();
   const [sideBarSearchData, setSideBarSearchData] = useState({
@@ -103,57 +112,98 @@ const Search = () => {
 
   return (
     <div className="flex flex-col md:flex-row">
-      <div className="p-7 border-b-2 md:border-r-2 md:min-h-screen">
+      <div className="p-7 border-b-2 md:border-r-2 md:min-h-screen bg-white">
         <form className="flex flex-col gap-8" onSubmit={handleSubmit}>
-          <div className="flex items-center gap-2">
-            <label className="whitespace-nowrap font-semibold">Search:</label>
-            <input
+          {/* Search */}
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="searchTerm"
+              className="text-sm font-medium text-gray-700"
+            >
+              Search
+            </label>
+            <Input
               type="text"
               id="searchTerm"
-              placeholder="Search"
-              className="border rounded-lg p-3 w-full"
+              placeholder="Search packages..."
               value={sideBarSearchData.searchTerm}
               onChange={handleChange}
             />
           </div>
-          <div className="flex gap-2 flex-wrap items-center">
-            <label className="font-semibold">Type:</label>
-            <div className="flex gap-2">
-              <input
-                type="checkbox"
+
+          {/* Type (Checkboxes) */}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-medium text-gray-700">Type</label>
+            <div className="flex items-center space-x-2">
+              <Checkbox
                 id="offer"
-                className="w-5"
                 checked={sideBarSearchData.offer}
-                onChange={handleChange}
+                onCheckedChange={(checked) =>
+                  handleChange({
+                    target: { id: "offer", checked, type: "checkbox" },
+                  })
+                }
               />
-              <span>Offer</span>
+              <label
+                htmlFor="offer"
+                className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Offer
+              </label>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="font-semibold">Sort:</label>
-            <select
-              onChange={handleChange}
-              defaultValue={"created_at_desc"}
-              id="sort_order"
-              className="p-3 border rounded-lg"
+
+          {/* Sort */}
+          <div className="flex flex-col gap-2 ">
+            <label
+              htmlFor="sort_order"
+              className="text-sm font-medium text-gray-700"
             >
-              <option value="packagePrice_desc">Price high to low</option>
-              <option value="packagePrice_asc">Price low to high</option>
-              <option value="packageRating_desc">Top Rated</option>
-              <option value="packageTotalRatings_desc">Most Rated</option>
-              <option value="createdAt_desc">Latest</option>
-              <option value="createdAt_asc">Oldest</option>
-            </select>
+              Sort
+            </label>
+            <Select
+              defaultValue="createdAt_desc"
+              onValueChange={(value) =>
+                handleChange({
+                  target: { id: "sort_order", value, type: "select-one" },
+                })
+              }
+            >
+              <SelectTrigger id="sort_order">
+                <SelectValue placeholder="Select sort order" />
+              </SelectTrigger>
+              <SelectContent className="">
+                <SelectItem value="packagePrice_desc">
+                  Price high to low
+                </SelectItem>
+                <SelectItem value="packagePrice_asc">
+                  Price low to high
+                </SelectItem>
+                <SelectItem value="packageRating_desc">Top Rated</SelectItem>
+                <SelectItem value="packageTotalRatings_desc">
+                  Most Rated
+                </SelectItem>
+                <SelectItem value="createdAt_desc">Latest</SelectItem>
+                <SelectItem value="createdAt_asc">Oldest</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <button className="bg-slate-700 rounded-lg text-white p-3 uppercase hover:opacity-95">
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            className="bg-[#002b11] hover:bg-[#002b11]/90 text-white uppercase"
+          >
             Search
-          </button>
+          </Button>
         </form>
       </div>
       {/* ------------------------------------------------------------------------------- */}
       <div className="flex-1">
+        {/* Header */}
+
         <h1 className="text-xl font-semibold border-b p-3 text-slate-700 mt-5">
-          Package Results:
+          Destination Results:
         </h1>
         <div className="w-full p-5 grid 2xl:grid-cols-4 xlplus:grid-cols-3 lg:grid-cols-2 gap-2">
           {!loading && allPackages.length === 0 && (
