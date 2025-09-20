@@ -14,6 +14,7 @@ import Package from "./pages/Package";
 import RatingsPage from "./pages/RatingsPage";
 import Booking from "./pages/user/Booking";
 import Search from "./pages/Search";
+import BookingSuccess from "./pages/user/Success";
 const App = () => {
   return (
     <BrowserRouter>
@@ -39,6 +40,7 @@ const App = () => {
         <Route path="/booking" element={<PrivateRoute />}>
           <Route path=":packageId" element={<Booking />} />
         </Route>
+        <Route path="booking/success" element={<BookingSuccess />} />
       </Routes>
     </BrowserRouter>
   );

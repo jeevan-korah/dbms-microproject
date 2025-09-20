@@ -1,375 +1,448 @@
 import React, { useEffect, useState } from "react";
-import { FaClock, FaMapMarkerAlt } from "react-icons/fa";
 import { useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router";
-import DropIn from "braintree-web-drop-in-react";
-import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Shield, CheckCircle } from "lucide-react";
 
-const Booking = () => {
+export default function Booking() {
   const { currentUser } = useSelector((state) => state.user);
-  const params = useParams();
+  const { packageId } = useParams(); // route: /booking/:packageId or similar
   const navigate = useNavigate();
-  const [packageData, setPackageData] = useState({
-    packageName: "",
-    packageDescription: "",
-    packageDestination: "",
-    packageDays: 1,
-    packageNights: 1,
-    packageAccommodation: "",
-    packageTransportation: "",
-    packageMeals: "",
-    packageActivities: "",
-    packagePrice: 500,
-    packageDiscountPrice: 0,
-    packageOffer: false,
-    packageRating: 0,
-    packageTotalRatings: 0,
-    packageImages: [],
-  });
+
+  const [packageData, setPackageData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(null);
+
+  // core booking data that will be POSTed
   const [bookingData, setBookingData] = useState({
-    totalPrice: 0,
     packageDetails: null,
     buyer: null,
     persons: 1,
-    date: null,
+    date: "",
+    totalPrice: 0,
   });
-  const [clientToken, setClientToken] = useState("");
-  const [instance, setInstance] = useState("");
-  const [currentDate, setCurrentDate] = useState("");
 
+  // simple payment fields (UI only)
+  const [paymentInfo, setPaymentInfo] = useState({
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+    nameOnCard: currentUser?.username || "",
+  });
+
+  // min selectable date (tomorrow)
+  const [minDate, setMinDate] = useState("");
+
+  // fetch package info (keeps your existing API)
   const getPackageData = async () => {
     try {
       setLoading(true);
-      const res = await fetch(
-        `/api/package/get-package-data/${params?.packageId}`
-      );
+      const res = await fetch(`/api/package/get-package-data/${packageId}`);
       const data = await res.json();
       if (data?.success) {
-        setPackageData({
-          packageName: data?.packageData?.packageName,
-          packageDescription: data?.packageData?.packageDescription,
-          packageDestination: data?.packageData?.packageDestination,
-          packageDays: data?.packageData?.packageDays,
-          packageNights: data?.packageData?.packageNights,
-          packageAccommodation: data?.packageData?.packageAccommodation,
-          packageTransportation: data?.packageData?.packageTransportation,
-          packageMeals: data?.packageData?.packageMeals,
-          packageActivities: data?.packageData?.packageActivities,
-          packagePrice: data?.packageData?.packagePrice,
-          packageDiscountPrice: data?.packageData?.packageDiscountPrice,
-          packageOffer: data?.packageData?.packageOffer,
-          packageRating: data?.packageData?.packageRating,
-          packageTotalRatings: data?.packageData?.packageTotalRatings,
-          packageImages: data?.packageData?.packageImages,
-        });
-        setLoading(false);
+        setPackageData(data.packageData);
       } else {
-        setError(data?.message || "Something went wrong!");
-        setLoading(false);
+        setError(data?.message || "Failed to load package");
       }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  //get paymentgateway token
-  const getToken = async () => {
-    try {
-      const { data } = await axios.get(`/api/package/braintree/token`);
-      setClientToken(data?.clientToken);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-  useEffect(() => {
-    getToken();
-  }, [currentUser]);
-
-  //handle payment & book package
-  const handleBookPackage = async () => {
-    if (
-      bookingData.packageDetails === "" ||
-      bookingData.buyer === "" ||
-      bookingData.totalPrice <= 0 ||
-      bookingData.persons <= 0 ||
-      bookingData.date === ""
-    ) {
-      alert("All fields are required!");
-      return;
-    }
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/booking/book-package/${params?.id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bookingData),
-      });
-      const data = await res.json();
-      if (data?.success) {
-        setLoading(false);
-        alert(data?.message);
-        navigate(`/profile/${currentUser?.user_role === 1 ? "admin" : "user"}`);
-      } else {
-        setLoading(false);
-        alert(data?.message);
-      }
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load package");
+    } finally {
       setLoading(false);
     }
   };
 
+  // compute tomorrow date (safe)
   useEffect(() => {
-    if (params?.packageId) {
-      getPackageData();
-    }
-    let date = new Date().toISOString().substring(0, 10);
-    let d = date.substring(0, 8) + (parseInt(date.substring(8)) + 1);
-    setCurrentDate(d);
-  }, [params?.packageId]);
+    const t = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    setMinDate(t.toISOString().slice(0, 10));
+  }, []);
 
+  // initial load
   useEffect(() => {
-    if (packageData && params?.packageId) {
-      setBookingData({
-        ...bookingData,
-        packageDetails: params?.packageId,
-        buyer: currentUser?._id,
-        totalPrice: packageData?.packageDiscountPrice
-          ? packageData?.packageDiscountPrice * bookingData?.persons
-          : packageData?.packagePrice * bookingData?.persons,
-      });
+    if (!packageId) return;
+    getPackageData();
+  }, [packageId]);
+
+  // whenever packageData loads, set booking fields (package id, buyer, initial price)
+  useEffect(() => {
+    if (!packageData) return;
+    const pricePerPerson =
+      packageData.packageDiscountPrice || packageData.packagePrice || 0;
+    setBookingData((prev) => ({
+      ...prev,
+      packageDetails: packageId,
+      buyer: currentUser?._id || null,
+      totalPrice: pricePerPerson * prev.persons,
+    }));
+    // if payment name empty, prefill
+    setPaymentInfo((p) => ({
+      ...p,
+      nameOnCard: currentUser?.username || p.nameOnCard,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [packageData, currentUser]);
+
+  // recalc totalPrice when persons change
+  useEffect(() => {
+    if (!packageData) return;
+    const pricePerPerson =
+      packageData.packageDiscountPrice || packageData.packagePrice || 0;
+    setBookingData((prev) => ({
+      ...prev,
+      totalPrice: pricePerPerson * prev.persons,
+    }));
+  }, [bookingData.persons, packageData]);
+
+  // increment/decrement persons safely
+  const incPersons = () =>
+    setBookingData((prev) => ({
+      ...prev,
+      persons: Math.min(10, prev.persons + 1),
+    }));
+  const decPersons = () =>
+    setBookingData((prev) => ({
+      ...prev,
+      persons: Math.max(1, prev.persons - 1),
+    }));
+
+  // form changes handlers
+  const handleDateChange = (e) =>
+    setBookingData({ ...bookingData, date: e.target.value });
+  const handlePaymentChange = (e) =>
+    setPaymentInfo({ ...paymentInfo, [e.target.id]: e.target.value });
+
+  // booking POST to your backend (keeps your api path, using packageId)
+  const handleBookPackage = async () => {
+    // basic validation similar to original
+    if (
+      !bookingData.packageDetails ||
+      !bookingData.buyer ||
+      bookingData.totalPrice <= 0 ||
+      bookingData.persons <= 0 ||
+      !bookingData.date
+    ) {
+      alert("All fields are required!");
+      return;
     }
-  }, [packageData, params]);
+
+    try {
+      setLoading(true);
+      // payload: keep shape the backend expects; include paymentInfo as UI-only fields
+      const payload = {
+        ...bookingData,
+        paymentInfo, // backend may ignore or log — this is UI-only (no real payment)
+      };
+
+      const res = await fetch(`/api/booking/book-package/${packageId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (data?.success) {
+        setLoading(false);
+        alert(data?.message || "Booking successful!");
+        // navigate to profile (follow original logic)
+        navigate(`/profile/${currentUser?.user_role === 1 ? "admin" : "user"}`);
+      } else {
+        setLoading(false);
+        alert(data?.message || "Booking failed");
+      }
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+      alert("Something went wrong. Please try again.");
+    }
+  };
+
+  // helper: formatted currency
+  const format = (v) => `₹${Number(v || 0).toFixed(2)}`;
+
+  if (loading && !packageData)
+    return (
+      <div className="p-8">
+        <p className="text-center">Loading...</p>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="p-8">
+        <p className="text-center text-red-600">{error}</p>
+      </div>
+    );
 
   return (
-    <div className="w-full flex flex-col items-center">
-      <div className="w-[95%] flex flex-col items-center p-6 rounded shadow-2xl gap-3">
-        <h1 className="text-center font-bold text-2xl">Book Package</h1>
-        {/* user info */}
-        <div className="w-full flex flex-wrap justify-center gap-2">
-          <div className="pr-3 md:border-r md:pr-6">
-            <div className="flex flex-col p-2 w-64 xsm:w-72 h-fit gap-2">
-              <div className="flex flex-col">
-                <label htmlFor="username" className="font-semibold">
-                  Username:
-                </label>
-                <input
-                  type="text"
-                  id="username"
-                  className="p-1 rounded border border-black"
-                  value={currentUser.username}
-                  disabled
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="email" className="font-semibold">
-                  Email:
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  className="p-1 rounded border border-black"
-                  value={currentUser.email}
-                  disabled
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="address" className="font-semibold">
-                  Address:
-                </label>
-                <textarea
-                  maxLength={200}
-                  type="text"
-                  id="address"
-                  className="p-1 rounded border border-black resize-none"
-                  value={currentUser.address}
-                  disabled
-                />
-              </div>
-              <div className="flex flex-col">
-                <label htmlFor="phone" className="font-semibold">
-                  Phone:
-                </label>
-                <input
-                  type="text"
-                  id="phone"
-                  className="p-1 rounded border border-black"
-                  value={currentUser.phone}
-                  disabled
-                />
-              </div>
-            </div>
-          </div>
-          {/* package info */}
-          <div className="pl-3 md:border-l md:pl-6">
-            <div className="flex flex-col gap-1">
-              <div className="flex flex-wrap gap-2">
-                <img
-                  className="w-28"
-                  src={packageData.packageImages[0]}
-                  alt="Package image"
-                />
-                <div>
-                  <p className="font-semibold text-lg mb-1 capitalize">
-                    {packageData.packageName}
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <h1 className="text-3xl font-bold mb-6 text-center">
+        Confirm Your Booking
+      </h1>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Left/Main column */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Package details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Package Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-4">
+                <div className="w-28 h-20 rounded overflow-hidden bg-gray-100">
+                  <img
+                    src={packageData?.packageImages?.[0] || "/placeholder.svg"}
+                    alt={packageData?.packageName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold">
+                    {packageData?.packageName}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-medium">Destination:</span>{" "}
+                    {packageData?.packageDestination}
                   </p>
-                  <p className="flex gap-2 text-green-700 font-semibold capitalize">
-                    <FaMapMarkerAlt /> {packageData.packageDestination}
+                  <p className="text-sm text-muted-foreground mt-1">
+                    <span className="font-medium">Duration:</span>{" "}
+                    {packageData?.packageDays} day
+                    {packageData?.packageDays > 1 ? "s" : ""} •{" "}
+                    {packageData?.packageNights} night
+                    {packageData?.packageNights > 1 ? "s" : ""}
                   </p>
-                  {/* days & nights */}
-                  {(+packageData.packageDays > 0 ||
-                    +packageData.packageNights > 0) && (
-                    <p className="flex items-center gap-2">
-                      <FaClock />
-                      {+packageData.packageDays > 0 &&
-                        (+packageData.packageDays > 1
-                          ? packageData.packageDays + " Days"
-                          : packageData.packageDays + " Day")}
-                      {+packageData.packageDays > 0 &&
-                        +packageData.packageNights > 0 &&
-                        " - "}
-                      {+packageData.packageNights > 0 &&
-                        (+packageData.packageNights > 1
-                          ? packageData.packageNights + " Nights"
-                          : packageData.packageNights + " Night")}
-                    </p>
-                  )}
+                  <div className="mt-3">
+                    {packageData?.packageOffer ? (
+                      <div className="flex items-center gap-2">
+                        <span className="line-through text-gray-400">
+                          {format(packageData.packagePrice)}
+                        </span>
+                        <span className="text-lg font-semibold">
+                          {format(packageData.packageDiscountPrice)}
+                        </span>
+                        <span className="ml-2 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                          {Math.floor(
+                            ((+packageData.packagePrice -
+                              +packageData.packageDiscountPrice) /
+                              +packageData.packagePrice) *
+                              100
+                          )}
+                          % OFF
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-lg font-semibold">
+                        {format(packageData?.packagePrice)}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="flex flex-col my-1">
-                <label className="font-semibold" htmlFor="date">
-                  Select Date:
-                </label>
-                <input
-                  type="date"
-                  min={currentDate !== "" ? currentDate : ""}
-                  //   min={"2024-01-23"}
-                  id="date"
-                  className="w-max border rounded"
-                  onChange={(e) => {
-                    setBookingData({ ...bookingData, date: e.target.value });
-                  }}
+
+              <Separator className="my-4" />
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="date">Select date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    min={minDate}
+                    value={bookingData.date}
+                    onChange={handleDateChange}
+                  />
+                </div>
+
+                <div>
+                  <Label>Guests</Label>
+                  <div className="flex items-center gap-3 mt-2">
+                    <Button onClick={decPersons} size="sm">
+                      -
+                    </Button>
+                    <div className="w-12 text-center font-medium">
+                      {bookingData.persons}
+                    </div>
+                    <Button onClick={incPersons} size="sm">
+                      +
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Guest information (disabled inputs; from currentUser) */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Guest Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Username</Label>
+                  <Input value={currentUser?.username || ""} disabled />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input value={currentUser?.email || ""} disabled />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3 mt-2">
+                <div>
+                  <Label>Phone</Label>
+                  <Input value={currentUser?.phone || ""} disabled />
+                </div>
+                <div>
+                  <Label>Address</Label>
+                  <Input value={currentUser?.address || ""} disabled />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment information — simple fields only (UI) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span>Payment Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="cardNumber">Card Number</Label>
+                <Input
+                  id="cardNumber"
+                  placeholder="1234 5678 9012 3456"
+                  value={paymentInfo.cardNumber}
+                  onChange={handlePaymentChange}
                 />
               </div>
-              {/* price */}
-              <p className="flex gap-1 text-xl font-semibold my-1">
-                Price:
-                {packageData.packageOffer ? (
-                  <>
-                    <span className="line-through text-gray-700">
-                      ${packageData.packagePrice}
-                    </span>{" "}
-                    -<span>${packageData.packageDiscountPrice}</span>
-                    <span className="text-lg ml-2 bg-green-700 p-1 rounded text-white">
-                      {Math.floor(
-                        ((+packageData.packagePrice -
-                          +packageData.packageDiscountPrice) /
-                          +packageData.packagePrice) *
-                          100
-                      )}
-                      % Off
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-green-700">
-                    ${packageData.packagePrice}
-                  </span>
-                )}
-              </p>
-              {/* price */}
-              <div className="flex border-2 w-max">
-                <button
-                  className="p-2 py-1 font-semibold"
-                  onClick={() => {
-                    if (bookingData.persons > 1) {
-                      setBookingData({
-                        ...bookingData,
-                        persons: (bookingData.persons -= 1),
-                        totalPrice: packageData.packageDiscountPrice
-                          ? packageData.packageDiscountPrice *
-                            bookingData.persons
-                          : packageData.packagePrice * bookingData.persons,
-                      });
-                    }
-                  }}
-                >
-                  -
-                </button>
-                <input
-                  value={bookingData.persons}
-                  disabled
-                  type="text"
-                  className="border w-10 text-center text-lg"
-                />
-                <button
-                  className="p-2 py-1 font-semibold"
-                  onClick={() => {
-                    if (bookingData.persons < 10) {
-                      setBookingData({
-                        ...bookingData,
-                        persons: (bookingData.persons += 1),
-                        totalPrice: packageData.packageDiscountPrice
-                          ? packageData.packageDiscountPrice *
-                            bookingData.persons
-                          : packageData.packagePrice * bookingData.persons,
-                      });
-                    }
-                  }}
-                >
-                  +
-                </button>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="expiry">Expiry (MM/YY)</Label>
+                  <Input
+                    id="expiry"
+                    placeholder="MM/YY"
+                    value={paymentInfo.expiry}
+                    onChange={handlePaymentChange}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="cvv">CVV</Label>
+                  <Input
+                    id="cvv"
+                    placeholder="123"
+                    value={paymentInfo.cvv}
+                    onChange={handlePaymentChange}
+                  />
+                </div>
               </div>
-              <p className="text-xl font-semibold">
-                Total Price:
-                <span className="text-green-700">
-                  $
-                  {packageData.packageDiscountPrice
-                    ? packageData.packageDiscountPrice * bookingData.persons
-                    : packageData.packagePrice * bookingData.persons}
-                </span>
-              </p>
-              <div className="my-2 max-w-[300px] gap-1">
-                <p
-                  className={`font-semibold ${
-                    instance && "text-red-700 text-sm"
-                  }`}
-                >
-                  Payment:
-                  {!instance
-                    ? "Loading..."
-                    : "Don't use your original card details!(This is not the production build)"}
+
+              <div>
+                <Label htmlFor="nameOnCard">Name on Card</Label>
+                <Input
+                  id="nameOnCard"
+                  value={paymentInfo.nameOnCard}
+                  onChange={handlePaymentChange}
+                />
+              </div>
+
+              <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <Shield className="h-4 w-4" />
+                <p>
+                  Your card details are only collected for demo purposes — this
+                  site is not processing real payments.
                 </p>
-                {clientToken && (
-                  <>
-                    <DropIn
-                      options={{
-                        authorization: clientToken,
-                        paypal: {
-                          flow: "vault",
-                        },
-                      }}
-                      onInstance={(instance) => setInstance(instance)}
-                    />
-                    <button
-                      className="p-2 rounded bg-blue-600 text-white payment-btn disabled:optional:80 hover:opacity-95 cursor-pointer"
-                      onClick={handleBookPackage}
-                      disabled={loading || !instance || !currentUser?.address}
-                    >
-                      {loading ? "Processing..." : "Book Now"}
-                    </button>
-                  </>
-                )}
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar / Booking summary */}
+        <div className="space-y-6">
+          <Card className="sticky top-6">
+            <CardHeader>
+              <CardTitle>Booking Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between">
+                <span>Price per person</span>
+                <span>
+                  {format(
+                    packageData?.packageDiscountPrice ||
+                      packageData?.packagePrice
+                  )}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Guests</span>
+                <span>{bookingData.persons}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>{format(bookingData.totalPrice)}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Service fee</span>
+                <span>{format(25)}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Taxes</span>
+                <span>
+                  {format(Math.round((bookingData.totalPrice || 0) * 0.1))}
+                </span>
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-between text-lg font-semibold">
+                <span>Total</span>
+                <span>
+                  {format(
+                    (bookingData.totalPrice || 0) +
+                      25 +
+                      Math.round((bookingData.totalPrice || 0) * 0.1)
+                  )}
+                </span>
+              </div>
+
+              <Button
+                className="w-full mt-2"
+                onClick={handleBookPackage}
+                disabled={loading}
+              >
+                {loading ? "Processing..." : "Confirm Booking"}
+              </Button>
+
+              <div className="space-y-2 text-xs text-muted-foreground mt-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>Free cancellation up to 24 hours</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>Instant confirmation</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span>Secure (demo) payment</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
-};
-
-export default Booking;
+}

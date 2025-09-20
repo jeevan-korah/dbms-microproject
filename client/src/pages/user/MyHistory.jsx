@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { CardDescription } from "../../../components/ui/card";
 
 const MyHistory = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -62,24 +63,23 @@ const MyHistory = () => {
 
   return (
     <div className="w-full flex justify-center">
-      <Card className="w-[95%] shadow-xl rounded-lg p-3">
+      <Card className="w-[100%] shadow-xl rounded-lg">
         <CardHeader>
-          <CardTitle className="text-center text-2xl font-semibold">
-            History
-          </CardTitle>
+          <CardTitle className="">History</CardTitle>
+          <CardDescription>
+            Search and view all your previous history
+          </CardDescription>
+          {/* Search Bar */}
+          <Input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="mt-2"
+          />
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {loading && <p className="text-center text-lg">Loading...</p>}
           {error && <p className="text-center text-lg text-red-600">{error}</p>}
-
-          {/* Search Bar */}
-          <div className="w-full border-b pb-2">
-            <Input
-              placeholder="Search..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
 
           {/* Scrollable Bookings */}
           <ScrollArea className="h-[400px] pr-2">

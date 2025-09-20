@@ -70,7 +70,7 @@ const MyBookings = () => {
 
   return (
     <div className="w-full flex justify-center">
-      <Card className="w-[95%] shadow-xl rounded-lg">
+      <Card className="w-[100%] shadow-xl rounded-lg">
         <CardHeader>
           <CardTitle>My Bookings</CardTitle>
           <CardDescription>
