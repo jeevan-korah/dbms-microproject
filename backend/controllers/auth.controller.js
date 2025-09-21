@@ -85,7 +85,7 @@ export const loginController = async (req, res) => {
         expiresIn: "4d",
       }
     );
-    const { password: pass, ...rest } = validUser._doc; //deselcting password to send user(this will send all data accept password)
+    const { password: pass, ...rest } = validUser._doc;
     res
       .cookie("X_TTMS_access_token", token, {
         httpOnly: true,

@@ -50,6 +50,6 @@ if (process.env.NODE_ENV_CUSTOM === "production") {
 }
 
 //port
-app.listen(8000, () => {
+app.listen(8000, "0.0.0.0", () => {
   console.log("listening on http://localhost:8000");
 });
