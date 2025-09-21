@@ -36,11 +36,13 @@ app.use("/api/rating", ratingRoute);
 app.use("/api/booking", bookingRoute);
 
 if (process.env.NODE_ENV_CUSTOM === "production") {
+  const frontendPath = path.join(__dirname, "./client/dist");
+
   //static files
-  app.use(express.static(path.join(__dirname, "/client/dist")));
+  app.use(express.static(frontendPath));
 
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
+    res.sendFile(path.join(frontendPath, "index.html"));
   });
 } else {
   // //rest api
@@ -53,3 +55,4 @@ if (process.env.NODE_ENV_CUSTOM === "production") {
 app.listen(8000, "0.0.0.0", () => {
   console.log("listening on http://localhost:8000");
 });
+``;
