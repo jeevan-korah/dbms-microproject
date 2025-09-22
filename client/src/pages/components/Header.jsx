@@ -28,8 +28,8 @@ const Header = () => {
   const navItems = [
     { to: "/search", label: "Destinations" },
     { to: "/hotels", label: "Hotels" },
-    { to: "/flights", label: "Flights" },
-    { to: "/reviews", label: "Reviews" },
+    { to: "/reviews", label: "Restaurants" },
+    { to: "/flights", label: "Things to do" },
   ];
 
   const handleLogout = async () => {
@@ -49,7 +49,7 @@ const Header = () => {
   };
   return (
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-0  md:px-4">
         <div className="flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
             <div className="flex items-center justify-center w-8 h-8 bg-[#002b11] rounded-full">
@@ -148,9 +148,9 @@ const Header = () => {
               </Button>
             )}
 
-            <Button variant="ghost" size="icon" className="md:hidden">
+            {/* <Button variant="ghost" size="icon" className="md:hidden">
               <Menu className="h-5 w-5" />
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>

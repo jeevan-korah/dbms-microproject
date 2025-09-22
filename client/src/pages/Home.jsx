@@ -26,6 +26,51 @@ const Home = () => {
   const [offerPackages, setOfferPackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [active, setActive] = useState("all");
+
+  const buttons = [
+    {
+      name: "all",
+      label: "Search All",
+      header: "Where to?",
+      icon: <Search className="h-4 w-4" />,
+    },
+    {
+      name: "hotels",
+      label: "Hotels",
+      header: "Stay somewhere great",
+
+      icon: <HomeIcon className="h-4 w-4" />,
+    },
+    {
+      name: "things",
+      label: "Things to Do",
+      header: "Do something fun",
+
+      icon: <MapPin className="h-4 w-4" />,
+    },
+    {
+      name: "restaurants",
+      label: "Restaurants",
+      header: "Find places to eat",
+
+      icon: <Utensils className="h-4 w-4" />,
+    },
+    {
+      name: "flights",
+      label: "Explore",
+      header: "Learn, explore, travel",
+      icon: <Plane className="h-4 w-4" />,
+    },
+    // {
+    //   name: "holiday",
+    //   label: "Holiday Homes",
+    //   header: "Where to?",
+
+    //   icon: <Heart className="h-4 w-4" />,
+    // },
+  ];
+  const activeButton = buttons.find((btn) => btn.name === active);
 
   const getTopPackages = useCallback(async () => {
     try {
@@ -102,54 +147,29 @@ const Home = () => {
           <div className="text-center space-y-8">
             {/* Main heading */}
             <h1 className="text-4xl lg:text-6xl font-bold text-[#002b11] text-balance leading-tight">
-              Where to ?!
+              {activeButton?.header}
             </h1>
 
             <div className="max-w-4xl mx-auto">
               {/* Search tabs */}
               <div className="flex flex-wrap justify-center gap-2 mb-6">
-                <Button
-                  variant="ghost"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-full border-2 border-[#002b11] bg-[#002b11] text-white"
-                >
-                  <Search className="h-4 w-4" />
-                  <span>Search All</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-full border border-gray-300 hover:border-[#002b11] hover:bg-gray-50"
-                >
-                  <HomeIcon className="h-4 w-4" />
-                  <span>Hotels</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-full border border-gray-300 hover:border-[#002b11] hover:bg-gray-50"
-                >
-                  <MapPin className="h-4 w-4" />
-                  <span>Things to Do</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-full border border-gray-300 hover:border-[#002b11] hover:bg-gray-50"
-                >
-                  <Utensils className="h-4 w-4" />
-                  <span>Restaurants</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-full border border-gray-300 hover:border-[#002b11] hover:bg-gray-50"
-                >
-                  <Plane className="h-4 w-4" />
-                  <span>Flights</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-full border border-gray-300 hover:border-[#002b11] hover:bg-gray-50"
-                >
-                  <Heart className="h-4 w-4" />
-                  <span>Holiday Homes</span>
-                </Button>
+                {buttons.map((btn) => (
+                  <Button
+                    key={btn.name}
+                    variant="ghost"
+                    onClick={() => setActive(btn.name)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-full border 
+            ${
+              active === btn.name
+                ? "bg-green-600 text-white border-green-600 hover:bg-green-600 hover:text-white"
+                : // "bg-[#002b11] text-white border[#002b11] hover:bg-[#002b11] hover:text-white"
+                  ""
+            }`}
+                  >
+                    {btn.icon}
+                    <span>{btn.label}</span>
+                  </Button>
+                ))}
               </div>
 
               <div className="flex items-center max-w-2xl mx-auto bg-white border-2 border-gray-300 rounded-full shadow-lg hover:shadow-xl transition-shadow">
@@ -157,7 +177,7 @@ const Home = () => {
                   <Search className="h-4` w-4" />
                   <Input
                     placeholder="Places to go, things to do, hotels..."
-                    className="border-0 text-lg shadow-none placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="border-0 text-sm md:text-lg shadow-none placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
