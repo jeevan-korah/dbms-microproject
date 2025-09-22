@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 // ------------------- BOOK PACKAGE WITH PAYMENT -------------------
 export const bookPackage = async (req, res) => {
   try {
-    console.log("The requested body: ", req.body);
+    
     const {
       packageDetails,
       buyer,
