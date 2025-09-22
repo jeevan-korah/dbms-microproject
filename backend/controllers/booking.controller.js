@@ -3,9 +3,10 @@ import Package from "../models/package.model.js";
 import Payment from "../models/payment.model.js";
 import { ObjectId } from "mongodb";
 
-// book package with payment
+// ------------------- BOOK PACKAGE WITH PAYMENT -------------------
 export const bookPackage = async (req, res) => {
   try {
+    console.log("The requested body: ", req.body);
     const {
       packageDetails,
       buyer,
@@ -94,7 +95,7 @@ export const bookPackage = async (req, res) => {
   }
 };
 
-// get current bookings for admin
+// ------------------- GET CURRENT BOOKINGS FOR ADMIN -------------------
 export const getCurrentBookings = async (req, res) => {
   try {
     const searchTerm = req?.query?.searchTerm || "";
@@ -132,7 +133,7 @@ export const getCurrentBookings = async (req, res) => {
   }
 };
 
-// get all bookings admin
+// ------------------- GET ALL BOOKINGS FOR ADMIN -------------------
 export const getAllBookings = async (req, res) => {
   try {
     const searchTerm = req?.query?.searchTerm || "";
@@ -167,7 +168,7 @@ export const getAllBookings = async (req, res) => {
   }
 };
 
-// get current bookings for user by id
+// ------------------- GET CURRENT BOOKINGS FOR USER -------------------
 export const getUserCurrentBookings = async (req, res) => {
   try {
     if (req?.user?.id !== req?.params?.id) {
@@ -207,7 +208,7 @@ export const getUserCurrentBookings = async (req, res) => {
   }
 };
 
-// get all bookings by user id
+// ------------------- GET ALL BOOKINGS FOR USER -------------------
 export const getAllUserBookings = async (req, res) => {
   try {
     if (req?.user?.id !== req?.params?.id) {
@@ -245,7 +246,7 @@ export const getAllUserBookings = async (req, res) => {
   }
 };
 
-// delete booking history
+// ------------------- DELETE BOOKING HISTORY -------------------
 export const deleteBookingHistory = async (req, res) => {
   try {
     if (req?.user?.id !== req?.params?.userId) {
@@ -271,7 +272,7 @@ export const deleteBookingHistory = async (req, res) => {
   }
 };
 
-// cancel booking
+// ------------------- CANCEL BOOKING -------------------
 export const cancelBooking = async (req, res) => {
   try {
     if (req.user.id !== req?.params?.userId) {
