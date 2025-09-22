@@ -1,5 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table"; // adjust import based on your setup
 
 const AllPackages = () => {
   const [packages, setPackages] = useState([]);
@@ -13,54 +26,44 @@ const AllPackages = () => {
     try {
       setLoading(true);
       let url =
-        filter === "offer" //offer
+        filter === "offer"
           ? `/api/package/get-packages?searchTerm=${search}&offer=true`
-          : filter === "latest" //latest
+          : filter === "latest"
           ? `/api/package/get-packages?searchTerm=${search}&sort=createdAt`
-          : filter === "top" //top rated
+          : filter === "top"
           ? `/api/package/get-packages?searchTerm=${search}&sort=packageRating`
-          : `/api/package/get-packages?searchTerm=${search}`; //all
+          : `/api/package/get-packages?searchTerm=${search}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data?.success) {
         setPackages(data?.packages);
         setLoading(false);
+        setShowMoreBtn(data?.packages?.length > 8);
       } else {
         setLoading(false);
         alert(data?.message || "Something went wrong!");
       }
-      if (data?.packages?.length > 8) {
-        setShowMoreBtn(true);
-      } else {
-        setShowMoreBtn(false);
-      }
     } catch (error) {
       console.log(error);
+      setLoading(false);
     }
   };
 
   const onShowMoreSClick = async () => {
-    const numberOfPackages = packages.length;
-    const startIndex = numberOfPackages;
+    const startIndex = packages.length;
     let url =
-      filter === "offer" //offer
+      filter === "offer"
         ? `/api/package/get-packages?searchTerm=${search}&offer=true&startIndex=${startIndex}`
-        : filter === "latest" //latest
+        : filter === "latest"
         ? `/api/package/get-packages?searchTerm=${search}&sort=createdAt&startIndex=${startIndex}`
-        : filter === "top" //top rated
+        : filter === "top"
         ? `/api/package/get-packages?searchTerm=${search}&sort=packageRating&startIndex=${startIndex}`
-        : `/api/package/get-packages?searchTerm=${search}&startIndex=${startIndex}`; //all
+        : `/api/package/get-packages?searchTerm=${search}&startIndex=${startIndex}`;
     const res = await fetch(url);
     const data = await res.json();
-    if (data?.packages?.length < 9) {
-      setShowMoreBtn(false);
-    }
     setPackages([...packages, ...data?.packages]);
+    if (data?.packages?.length < 9) setShowMoreBtn(false);
   };
-
-  useEffect(() => {
-    getPackages();
-  }, [filter, search]);
 
   const handleDelete = async (packageId) => {
     try {
@@ -74,129 +77,107 @@ const AllPackages = () => {
       setLoading(false);
     } catch (error) {
       console.log(error);
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    getPackages();
+  }, [filter, search]);
+
   return (
-    <>
-      <div className="shadow-xl rounded-lg w-full flex flex-col p-5 justify-center gap-2">
-        {loading && <h1 className="text-center text-lg">Loading...</h1>}
-        {packages && (
-          <>
-            <div>
-              <input
-                className="p-2 rounded border"
-                type="text"
-                placeholder="Search"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                }}
-              />
-            </div>
-            <div className="my-2 border-y-2 py-2">
-              <ul className="w-full flex justify-around">
-                <li
-                  className={`cursor-pointer hover:scale-95 border rounded-xl p-2 transition-all duration-300 ${
-                    filter === "all" && "bg-blue-500 text-white"
-                  }`}
-                  id="all"
-                  onClick={(e) => {
-                    setFilter(e.target.id);
-                  }}
-                >
-                  All
-                </li>
-                <li
-                  className={`cursor-pointer hover:scale-95 border rounded-xl p-2 transition-all duration-300 ${
-                    filter === "offer" && "bg-blue-500 text-white"
-                  }`}
-                  id="offer"
-                  onClick={(e) => {
-                    setFilter(e.target.id);
-                  }}
-                >
-                  Offer
-                </li>
-                <li
-                  className={`cursor-pointer hover:scale-95 border rounded-xl p-2 transition-all duration-300 ${
-                    filter === "latest" && "bg-blue-500 text-white"
-                  }`}
-                  id="latest"
-                  onClick={(e) => {
-                    setFilter(e.target.id);
-                  }}
-                >
-                  Latest
-                </li>
-                <li
-                  className={`cursor-pointer hover:scale-95 border rounded-xl p-2 transition-all duration-300 ${
-                    filter === "top" && "bg-blue-500 text-white"
-                  }`}
-                  id="top"
-                  onClick={(e) => {
-                    setFilter(e.target.id);
-                  }}
-                >
-                  Top
-                </li>
-              </ul>
-            </div>
-          </>
-        )}
-        {/* packages */}
-        {packages ? (
-          packages.map((pack, i) => {
-            return (
-              <div
-                className="border rounded-lg w-full flex p-3 justify-between items-center hover:scale-[1.02] transition-all duration-300"
-                key={i}
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+          <Input
+            type="text"
+            placeholder="Search packages..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border rounded-lg p-2 w-full sm:w-1/3"
+          />
+
+          <div className="flex gap-2 flex-wrap">
+            {["all", "offer", "latest", "top"].map((f) => (
+              <Button
+                key={f}
+                variant={filter === f ? "default" : "outline"}
+                size="sm"
+                onClick={() => setFilter(f)}
               >
-                <Link to={`/package/${pack._id}`}>
-                  <img
-                    src={pack?.packageImages[0]}
-                    alt="image"
-                    className="w-20 h-20 rounded"
-                  />
-                </Link>
-                <Link to={`/package/${pack._id}`}>
-                  <p className="font-semibold hover:underline">
-                    {pack?.packageName}
-                  </p>
-                </Link>
-                <div className="flex flex-col">
-                  <Link to={`/profile/admin/update-package/${pack._id}`}>
-                    <button
-                      disabled={loading}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {loading ? "Loading..." : "Edit"}
-                    </button>
-                  </Link>
-                  <button
-                    disabled={loading}
-                    onClick={() => handleDelete(pack?._id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    {loading ? "Loading..." : "Delete"}
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        ) : (
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {loading ? (
+          <h1 className="text-center text-lg">Loading...</h1>
+        ) : packages.length === 0 ? (
           <h1 className="text-center text-2xl">No Packages Yet!</h1>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Package</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {packages.map((pack) => (
+                <TableRow
+                  key={pack._id}
+                  className="hover:bg-gray-50 transition"
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Link to={`/package/${pack._id}`}>
+                        <img
+                          src={pack?.packageImages[0]}
+                          alt={pack?.packageName}
+                          className="w-20 h-20 rounded object-cover"
+                        />
+                      </Link>
+                      <Link
+                        to={`/package/${pack._id}`}
+                        className="font-semibold hover:underline"
+                      >
+                        {pack?.packageName}
+                      </Link>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Link to={`/profile/admin/update-package/${pack._id}`}>
+                        <Button size="sm" variant="outline" disabled={loading}>
+                          Edit
+                        </Button>
+                      </Link>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        disabled={loading}
+                        onClick={() => handleDelete(pack._id)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
+
         {showMoreBtn && (
-          <button
-            onClick={onShowMoreSClick}
-            className="text-sm bg-green-700 text-white hover:underline p-2 m-3 rounded text-center w-max"
-          >
-            Show More
-          </button>
+          <div className="flex justify-center mt-4">
+            <Button onClick={onShowMoreSClick} size="sm" variant="default">
+              Show More
+            </Button>
+          </div>
         )}
-      </div>
-    </>
+      </CardContent>
+    </Card>
   );
 };
 

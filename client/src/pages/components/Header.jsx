@@ -1,67 +1,6 @@
-// import React from "react";
-// import { Link } from "react-router-dom";
-// import { useSelector } from "react-redux";
-// import defaultProfileImg from "../../assets/images/profile.png";
-
-// const Header = () => {
-//   const { currentUser } = useSelector((state) => state.user);
-//   return (
-//     <>
-//       <div className="bg-slate-400 p-4 flex justify-between items-center">
-//         <h1
-//           className="h-min text-4xl font-bold relative"
-//           style={{
-//             color: "transparent",
-//             WebkitTextStroke: "0.7px",
-//             WebkitTextStrokeColor: "#fff",
-//           }}
-//         >
-//           Come
-//           <span
-//             className="shadow-xl rounded-lg text-slate-700 text-2xl absolute left-1 top-[-10px] text-center"
-//             style={{
-//               WebkitTextStroke: "0",
-//             }}
-//           >
-//             Dream Tours
-//           </span>
-//         </h1>
-//         <ul className="flex flex-wrap items-center justify-end gap-2 text-white font-semibold list-none">
-//           <li className="hover:underline hover:scale-105 transition-all duration-150">
-//             <Link to={`/`}>Home</Link>
-//           </li>
-//           <li className="hover:underline hover:scale-105 transition-all duration-150">
-//             <Link to={`/search`}>Packages</Link>
-//           </li>
-//           <li className="hover:underline hover:scale-105 transition-all duration-150">
-//             <Link to={`/about`}>About</Link>
-//           </li>
-//           <li className="w-10 h-10 flex items-center justify-center">
-//             {currentUser ? (
-//               <Link
-//                 to={`/profile/${
-//                   currentUser.user_role === 1 ? "admin" : "user"
-//                 }`}
-//               >
-//                 <img
-//                   src={currentUser.avatar || defaultProfileImg}
-//                   alt={currentUser.username}
-//                   className="border w-10 h-10 border-black rounded-[50%]"
-//                 />
-//               </Link>
-//             ) : (
-//               <Link to={`/login`}>Login</Link>
-//             )}
-//           </li>
-//         </ul>
-//       </div>
-//     </>
-//   );
-// };
-
-// export default Header;
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+
 import { useSelector, useDispatch } from "react-redux";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -74,13 +13,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Globe, User, Settings, LogOut, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-// import { logoutUser } from "../../redux/userSlice"; // adjust path
-
+import {
+  logOutStart,
+  logOutSuccess,
+  logOutFailure,
+} from "../../redux/user/userSlice";
 const Header = () => {
   const location = useLocation();
   const pathname = location.pathname;
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const navItems = [
     { to: "/search", label: "Destinations" },
@@ -89,10 +32,21 @@ const Header = () => {
     { to: "/reviews", label: "Reviews" },
   ];
 
-  const logout = () => {
-    dispatch(logoutUser());
+  const handleLogout = async () => {
+    try {
+      dispatch(logOutStart());
+      const res = await fetch("/api/auth/logout");
+      const data = await res.json();
+      if (!data?.success) {
+        dispatch(logOutFailure(data?.message));
+        return;
+      }
+      dispatch(logOutSuccess());
+      navigate("/login");
+    } catch (error) {
+      console.log(error);
+    }
   };
-
   return (
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
       <div className="container mx-auto px-4">
@@ -179,9 +133,7 @@ const Header = () => {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                  //  onClick={logout}
-                  >
+                  <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Log out
                   </DropdownMenuItem>

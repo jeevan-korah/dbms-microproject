@@ -158,7 +158,7 @@ const AdminDashboard = () => {
     return <p className="text-red-600 text-center mt-10">Please login first</p>;
 
   return (
-    <div className="container mx-auto py-6 px-4 flex flex-col md:flex-row gap-6">
+    <div className="container mx-auto py-6 px-0 md:px-4 flex flex-col md:flex-row gap-6">
       {/* Left Column */}
       <Card className="w-full md:w-1/3 flex-shrink-0">
         <CardHeader className="flex flex-col items-center">

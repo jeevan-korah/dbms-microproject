@@ -8,10 +8,16 @@ import {
   updatePassSuccess,
   updatePassFailure,
 } from "../../redux/user/userSlice";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 const AdminUpdateProfile = () => {
-  const { currentUser, loading, error } = useSelector((state) => state.user);
+  const { currentUser, loading } = useSelector((state) => state.user);
   const dispatch = useDispatch();
+
   const [updateProfileDetailsPanel, setUpdateProfileDetailsPanel] =
     useState(true);
   const [formData, setFormData] = useState({
@@ -26,7 +32,7 @@ const AdminUpdateProfile = () => {
   });
 
   useEffect(() => {
-    if (currentUser !== null) {
+    if (currentUser) {
       setFormData({
         username: currentUser.username,
         address: currentUser.address,
@@ -57,33 +63,26 @@ const AdminUpdateProfile = () => {
       currentUser.address === formData.address &&
       currentUser.phone === formData.phone
     ) {
-      alert("Change atleast 1 field to update details");
+      alert("Change at least 1 field to update details");
       return;
     }
     try {
       dispatch(updateUserStart());
       const res = await fetch(`/api/user/update/${currentUser._id}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
       const data = await res.json();
-      if (data.success === false && res.status !== 201 && res.status !== 200) {
-        dispatch(updateUserSuccess());
-        dispatch(updateUserFailure(data?.messsage));
-        alert("Session Ended! Please login again");
-        navigate("/login");
-        return;
-      }
       if (data.success && res.status === 201) {
         alert(data?.message);
         dispatch(updateUserSuccess(data?.user));
-        return;
+      } else if (data.success === false) {
+        dispatch(updateUserFailure(data?.message));
+        alert("Session Ended! Please login again");
+      } else {
+        alert(data?.message);
       }
-      alert(data?.message);
-      return;
     } catch (error) {
       console.log(error);
     }
@@ -91,10 +90,7 @@ const AdminUpdateProfile = () => {
 
   const updateUserPassword = async (e) => {
     e.preventDefault();
-    if (
-      updatePassword.oldpassword === "" ||
-      updatePassword.newpassword === ""
-    ) {
+    if (!updatePassword.oldpassword || !updatePassword.newpassword) {
       alert("Enter a valid password");
       return;
     }
@@ -106,142 +102,152 @@ const AdminUpdateProfile = () => {
       dispatch(updatePassStart());
       const res = await fetch(`/api/user/update-password/${currentUser._id}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatePassword),
       });
       const data = await res.json();
-      if (data.success === false && res.status !== 201 && res.status !== 200) {
-        dispatch(updateUserSuccess());
+      if (data.success) {
+        dispatch(updatePassSuccess());
+        alert(data?.message);
+        setUpdatePassword({ oldpassword: "", newpassword: "" });
+      } else {
         dispatch(updatePassFailure(data?.message));
         alert("Session Ended! Please login again");
-        navigate("/login");
-        return;
       }
-      dispatch(updatePassSuccess());
-      alert(data?.message);
-      setUpdatePassword({
-        oldpassword: "",
-        newpassword: "",
-      });
-      return;
     } catch (error) {
       console.log(error);
     }
   };
 
   return (
-    <div
-      className={`updateProfile w-full p-3 m-1 transition-all duration-300 flex justify-center`}
-    >
-      {updateProfileDetailsPanel === true ? (
-        <div className="flex flex-col border self-center shadow-2xl border-gray-400 rounded-lg p-2 w-72 h-fit gap-2 sm:w-[320px]">
-          <h1 className="text-2xl text-center font-semibold">Update Profile</h1>
-          <div className="flex flex-col">
-            <label htmlFor="username" className="font-semibold">
-              Username:
-            </label>
-            <input
-              type="text"
-              id="username"
-              className="p-1 rounded border border-black"
-              value={formData.username}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="address" className="font-semibold">
-              Address:
-            </label>
-            <textarea
-              maxLength={200}
-              type="text"
-              id="address"
-              className="p-1 rounded border border-black resize-none"
-              value={formData.address}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="phone" className="font-semibold">
-              Phone:
-            </label>
-            <input
-              type="text"
-              id="phone"
-              className="p-1 rounded border border-black"
-              value={formData.phone}
-              onChange={handleChange}
-            />
-          </div>
-          <button
-            disabled={loading}
-            onClick={updateUserDetails}
-            className="p-2 text-white bg-slate-700 rounded hover:opacity-95"
-          >
-            {loading ? "Loading..." : "Update"}
-          </button>
-          <button
-            disabled={loading}
-            type="button"
-            onClick={() => setUpdateProfileDetailsPanel(false)}
-            className="p-2 text-white bg-red-700 rounded hover:opacity-95"
-          >
-            {loading ? "Loading..." : "Change Password"}
-          </button>
-        </div>
+    <div className="w-full flex justify-center p-4">
+      {updateProfileDetailsPanel ? (
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-center">
+              Update Profile
+            </CardTitle>
+          </CardHeader>
+          <Separator />
+          <CardContent className="space-y-4 pt-4">
+            <div>
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium mb-1"
+              >
+                Username
+              </label>
+              <Input
+                id="username"
+                value={formData.username}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="address"
+                className="block text-sm font-medium mb-1"
+              >
+                Address
+              </label>
+              <Textarea
+                id="address"
+                maxLength={200}
+                value={formData.address}
+                onChange={handleChange}
+                className="resize-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium mb-1">
+                Phone
+              </label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                disabled={loading}
+                onClick={updateUserDetails}
+                className="flex-1"
+              >
+                {loading ? "Loading..." : "Update"}
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={loading}
+                onClick={() => setUpdateProfileDetailsPanel(false)}
+                className="flex-1"
+              >
+                {loading ? "Loading..." : "Change Password"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="flex flex-col border shadow-2xl border-gray-400 rounded-lg p-2 w-72 h-fit gap-2 sm:w-[320px]">
-          <h1 className="text-2xl text-center font-semibold">
-            Change Password
-          </h1>
-          <div className="flex flex-col">
-            <label htmlFor="username" className="font-semibold">
-              Enter old password:
-            </label>
-            <input
-              type="text"
-              id="oldpassword"
-              className="p-1 rounded border border-black"
-              value={updatePassword.oldpassword}
-              onChange={handlePass}
-            />
-          </div>
-          <div className="flex flex-col">
-            <label htmlFor="username" className="font-semibold">
-              Enter new password:
-            </label>
-            <input
-              type="text"
-              id="newpassword"
-              className="p-1 rounded border border-black"
-              value={updatePassword.newpassword}
-              onChange={handlePass}
-            />
-          </div>
-          <button
-            disabled={loading}
-            onClick={updateUserPassword}
-            className="p-2 text-white bg-slate-700 rounded hover:opacity-95"
-          >
-            {loading ? "Loading..." : "Update Password"}
-          </button>
-          <button
-            disabled={loading}
-            onClick={() => {
-              setUpdateProfileDetailsPanel(true);
-              setUpdatePassword({
-                oldpassword: "",
-                newpassword: "",
-              });
-            }}
-            type="button"
-            className="p-2 text-white bg-red-700 rounded hover:opacity-95 w-24"
-          >
-            {loading ? "Loading..." : "Back"}
-          </button>
-        </div>
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-center">
+              Change Password
+            </CardTitle>
+          </CardHeader>
+          <Separator />
+          <CardContent className="space-y-4 pt-4">
+            <div>
+              <label
+                htmlFor="oldpassword"
+                className="block text-sm font-medium mb-1"
+              >
+                Old Password
+              </label>
+              <Input
+                id="oldpassword"
+                type="password"
+                value={updatePassword.oldpassword}
+                onChange={handlePass}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="newpassword"
+                className="block text-sm font-medium mb-1"
+              >
+                New Password
+              </label>
+              <Input
+                id="newpassword"
+                type="password"
+                value={updatePassword.newpassword}
+                onChange={handlePass}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                disabled={loading}
+                onClick={updateUserPassword}
+                className="flex-1"
+              >
+                {loading ? "Loading..." : "Update Password"}
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={loading}
+                onClick={() => {
+                  setUpdateProfileDetailsPanel(true);
+                  setUpdatePassword({ oldpassword: "", newpassword: "" });
+                }}
+                className="flex-1"
+              >
+                {loading ? "Loading..." : "Back"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

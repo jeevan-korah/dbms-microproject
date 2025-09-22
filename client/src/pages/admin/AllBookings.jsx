@@ -9,6 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../components/ui/table";
 
 const AllBookings = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -85,7 +93,7 @@ const AllBookings = () => {
             )}
 
             <ScrollArea className="w-full h-96">
-              <div className="flex flex-col gap-2">
+              {/* <div className="flex flex-col gap-2">
                 {currentBookings.map((booking) => (
                   <Card
                     key={booking._id}
@@ -123,7 +131,57 @@ const AllBookings = () => {
                     </div>
                   </Card>
                 ))}
-              </div>
+              </div> */}
+              <Card>
+                <CardContent className="p-0 text-sm">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Package</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Guest</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentBookings.map((booking) => (
+                        <TableRow key={booking._id}>
+                          <TableCell className=" items-center gap-3">
+                            {/* <Link
+                              to={`/package/${booking?.packageDetails?._id}`}
+                            >
+                              <img
+                                src={booking?.packageDetails?.packageImages[0]}
+                                alt="Package"
+                                className="w-16 h-16 rounded-lg object-cover"
+                              />
+                            </Link> */}
+                            <Link
+                              to={`/package/${booking?.packageDetails?._id}`}
+                              className="font-medium hover:underline"
+                            >
+                              {booking?.packageDetails?.packageName}
+                            </Link>
+                          </TableCell>
+                          <TableCell>{booking?.date}</TableCell>
+                          <TableCell>{booking?.buyer?.username}</TableCell>
+                          <TableCell>{booking?.buyer?.email}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleCancel(booking._id)}
+                            >
+                              Cancel
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </ScrollArea>
           </CardContent>
         </Card>

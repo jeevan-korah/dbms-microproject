@@ -153,10 +153,11 @@ const Home = () => {
               </div>
 
               <div className="flex items-center max-w-2xl mx-auto bg-white border-2 border-gray-300 rounded-full shadow-lg hover:shadow-xl transition-shadow">
-                <div className="flex-1 px-6 py-4">
+                <div className="flex-1 flex px-6 py-4 items-center">
+                  <Search className="h-4` w-4" />
                   <Input
                     placeholder="Places to go, things to do, hotels..."
-                    className="border-0 text-lg placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="border-0 text-lg shadow-none placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -226,7 +227,7 @@ const Home = () => {
       )}
 
       {/* Travel Packages Section / Latest Packages */}
-      {!loading && latestPackages.length > 0 && (
+      {/* {!loading && latestPackages.length > 0 && (
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="text-center mb-10">
@@ -272,7 +273,7 @@ const Home = () => {
             </div>
           </div>
         </section>
-      )}
+      )} */}
 
       {/* Best Offers Section */}
       {!loading && offerPackages.length > 0 && (
