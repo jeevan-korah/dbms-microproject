@@ -1,12 +1,25 @@
 import Booking from "../models/booking.model.js";
 import Package from "../models/package.model.js";
+import Payment from "../models/payment.model.js";
 import { ObjectId } from "mongodb";
 
-//book package
+// ------------------- BOOK PACKAGE WITH PAYMENT -------------------
 export const bookPackage = async (req, res) => {
   try {
-    const { packageDetails, buyer, totalPrice, persons, date } = req.body;
+    
+    const {
+      packageDetails,
+      buyer,
+      totalPrice,
+      persons,
+      date,
+      cardNumber,
+      cvv,
+      expiryDate,
+      nameOnCard,
+    } = req.body;
 
+    // ensure user is booking with their own account
     if (req.user.id !== buyer) {
       return res.status(401).send({
         success: false,
@@ -14,15 +27,26 @@ export const bookPackage = async (req, res) => {
       });
     }
 
-    if (!packageDetails || !buyer || !totalPrice || !persons || !date) {
-      return res.status(200).send({
+    // ensure all booking + payment fields are provided
+    if (
+      !packageDetails ||
+      !buyer ||
+      !totalPrice ||
+      !persons ||
+      !date ||
+      !cardNumber ||
+      !cvv ||
+      !expiryDate ||
+      !nameOnCard
+    ) {
+      return res.status(400).send({
         success: false,
-        message: "All fields are required!",
+        message: "All fields (including payment) are required!",
       });
     }
 
+    // validate package
     const validPackage = await Package.findById(packageDetails);
-
     if (!validPackage) {
       return res.status(404).send({
         success: false,
@@ -30,25 +54,48 @@ export const bookPackage = async (req, res) => {
       });
     }
 
-    const newBooking = await Booking.create(req.body);
+    // create booking
+    const newBooking = await Booking.create({
+      packageDetails,
+      buyer,
+      totalPrice,
+      persons,
+      date,
+    });
 
-    if (newBooking) {
+    // create payment linked to this booking
+    const newPayment = await Payment.create({
+      booking: newBooking._id,
+      cardNumber,
+      cvv,
+      expiryDate,
+      nameOnCard,
+      status: "Paid", // later handle with payment gateway
+    });
+
+    if (newBooking && newPayment) {
       return res.status(201).send({
         success: true,
-        message: "Package Booked!",
+        message: "Package Booked and Payment Successful!",
+        booking: newBooking,
+        payment: newPayment,
       });
     } else {
       return res.status(500).send({
         success: false,
-        message: "Something went wrong!",
+        message: "Something went wrong while booking/payment!",
       });
     }
   } catch (error) {
     console.log(error);
+    return res.status(500).send({
+      success: false,
+      message: "Server Error!",
+    });
   }
 };
 
-//get current bookings for admin
+// ------------------- GET CURRENT BOOKINGS FOR ADMIN -------------------
 export const getCurrentBookings = async (req, res) => {
   try {
     const searchTerm = req?.query?.searchTerm || "";
@@ -57,7 +104,6 @@ export const getCurrentBookings = async (req, res) => {
       status: "Booked",
     })
       .populate("packageDetails")
-      // .populate("buyer", "username email")
       .populate({
         path: "buyer",
         match: {
@@ -68,16 +114,13 @@ export const getCurrentBookings = async (req, res) => {
         },
       })
       .sort({ createdAt: "asc" });
-    let bookingsFilterd = [];
-    bookings.map((booking) => {
-      if (booking.buyer !== null) {
-        bookingsFilterd.push(booking);
-      }
-    });
-    if (bookingsFilterd.length) {
+
+    const bookingsFiltered = bookings.filter((b) => b.buyer !== null);
+
+    if (bookingsFiltered.length) {
       return res.status(200).send({
         success: true,
-        bookings: bookingsFilterd,
+        bookings: bookingsFiltered,
       });
     } else {
       return res.status(200).send({
@@ -90,13 +133,12 @@ export const getCurrentBookings = async (req, res) => {
   }
 };
 
-//get all bookings admin
+// ------------------- GET ALL BOOKINGS FOR ADMIN -------------------
 export const getAllBookings = async (req, res) => {
   try {
     const searchTerm = req?.query?.searchTerm || "";
     const bookings = await Booking.find({})
       .populate("packageDetails")
-      // .populate("buyer", "username email")
       .populate({
         path: "buyer",
         match: {
@@ -107,16 +149,13 @@ export const getAllBookings = async (req, res) => {
         },
       })
       .sort({ createdAt: "asc" });
-    let bookingsFilterd = [];
-    bookings.map((booking) => {
-      if (booking.buyer !== null) {
-        bookingsFilterd.push(booking);
-      }
-    });
-    if (bookingsFilterd.length) {
+
+    const bookingsFiltered = bookings.filter((b) => b.buyer !== null);
+
+    if (bookingsFiltered.length) {
       return res.status(200).send({
         success: true,
-        bookings: bookingsFilterd,
+        bookings: bookingsFiltered,
       });
     } else {
       return res.status(200).send({
@@ -129,7 +168,7 @@ export const getAllBookings = async (req, res) => {
   }
 };
 
-//get current bookings for user by id
+// ------------------- GET CURRENT BOOKINGS FOR USER -------------------
 export const getUserCurrentBookings = async (req, res) => {
   try {
     if (req?.user?.id !== req?.params?.id) {
@@ -144,25 +183,19 @@ export const getUserCurrentBookings = async (req, res) => {
       date: { $gt: new Date().toISOString() },
       status: "Booked",
     })
-      // .populate("packageDetails")
       .populate({
         path: "packageDetails",
-        match: {
-          packageName: { $regex: searchTerm, $options: "i" },
-        },
+        match: { packageName: { $regex: searchTerm, $options: "i" } },
       })
       .populate("buyer", "username email")
       .sort({ createdAt: "asc" });
-    let bookingsFilterd = [];
-    bookings.map((booking) => {
-      if (booking.packageDetails !== null) {
-        bookingsFilterd.push(booking);
-      }
-    });
-    if (bookingsFilterd.length) {
+
+    const bookingsFiltered = bookings.filter((b) => b.packageDetails !== null);
+
+    if (bookingsFiltered.length) {
       return res.status(200).send({
         success: true,
-        bookings: bookingsFilterd,
+        bookings: bookingsFiltered,
       });
     } else {
       return res.status(200).send({
@@ -175,7 +208,7 @@ export const getUserCurrentBookings = async (req, res) => {
   }
 };
 
-//get all bookings by user id
+// ------------------- GET ALL BOOKINGS FOR USER -------------------
 export const getAllUserBookings = async (req, res) => {
   try {
     if (req?.user?.id !== req?.params?.id) {
@@ -188,25 +221,19 @@ export const getAllUserBookings = async (req, res) => {
     const bookings = await Booking.find({
       buyer: new ObjectId(req?.params?.id),
     })
-      // .populate("packageDetails")
       .populate({
         path: "packageDetails",
-        match: {
-          packageName: { $regex: searchTerm, $options: "i" },
-        },
+        match: { packageName: { $regex: searchTerm, $options: "i" } },
       })
       .populate("buyer", "username email")
       .sort({ createdAt: "asc" });
-    let bookingsFilterd = [];
-    bookings.map((booking) => {
-      if (booking.packageDetails !== null) {
-        bookingsFilterd.push(booking);
-      }
-    });
-    if (bookingsFilterd.length) {
+
+    const bookingsFiltered = bookings.filter((b) => b.packageDetails !== null);
+
+    if (bookingsFiltered.length) {
       return res.status(200).send({
         success: true,
-        bookings: bookingsFilterd,
+        bookings: bookingsFiltered,
       });
     } else {
       return res.status(200).send({
@@ -219,7 +246,7 @@ export const getAllUserBookings = async (req, res) => {
   }
 };
 
-//delete booking history
+// ------------------- DELETE BOOKING HISTORY -------------------
 export const deleteBookingHistory = async (req, res) => {
   try {
     if (req?.user?.id !== req?.params?.userId) {
@@ -245,7 +272,7 @@ export const deleteBookingHistory = async (req, res) => {
   }
 };
 
-//cancel booking
+// ------------------- CANCEL BOOKING -------------------
 export const cancelBooking = async (req, res) => {
   try {
     if (req.user.id !== req?.params?.userId) {
@@ -256,9 +283,7 @@ export const cancelBooking = async (req, res) => {
     }
     const cancBooking = await Booking.findByIdAndUpdate(
       req?.params?.id,
-      {
-        status: "Cancelled",
-      },
+      { status: "Cancelled" },
       { new: true }
     );
     if (cancBooking) {

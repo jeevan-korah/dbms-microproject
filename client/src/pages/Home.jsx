@@ -102,7 +102,7 @@ const Home = () => {
           <div className="text-center space-y-8">
             {/* Main heading */}
             <h1 className="text-4xl lg:text-6xl font-bold text-[#002b11] text-balance leading-tight">
-              Where to?
+              Where to ?!
             </h1>
 
             <div className="max-w-4xl mx-auto">

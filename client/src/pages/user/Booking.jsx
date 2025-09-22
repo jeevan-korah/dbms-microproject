@@ -10,14 +10,13 @@ import { Shield, CheckCircle } from "lucide-react";
 
 export default function Booking() {
   const { currentUser } = useSelector((state) => state.user);
-  const { packageId } = useParams(); // route: /booking/:packageId or similar
+  const { packageId } = useParams();
   const navigate = useNavigate();
 
   const [packageData, setPackageData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // core booking data that will be POSTed
   const [bookingData, setBookingData] = useState({
     packageDetails: null,
     buyer: null,
@@ -26,18 +25,15 @@ export default function Booking() {
     totalPrice: 0,
   });
 
-  // simple payment fields (UI only)
   const [paymentInfo, setPaymentInfo] = useState({
     cardNumber: "",
-    expiry: "",
+    expiryDate: "", // ✅ fixed variable to match backend
     cvv: "",
     nameOnCard: currentUser?.username || "",
   });
 
-  // min selectable date (tomorrow)
   const [minDate, setMinDate] = useState("");
 
-  // fetch package info (keeps your existing API)
   const getPackageData = async () => {
     try {
       setLoading(true);
@@ -56,19 +52,16 @@ export default function Booking() {
     }
   };
 
-  // compute tomorrow date (safe)
   useEffect(() => {
     const t = new Date(Date.now() + 24 * 60 * 60 * 1000);
     setMinDate(t.toISOString().slice(0, 10));
   }, []);
 
-  // initial load
   useEffect(() => {
     if (!packageId) return;
     getPackageData();
   }, [packageId]);
 
-  // whenever packageData loads, set booking fields (package id, buyer, initial price)
   useEffect(() => {
     if (!packageData) return;
     const pricePerPerson =
@@ -79,15 +72,12 @@ export default function Booking() {
       buyer: currentUser?._id || null,
       totalPrice: pricePerPerson * prev.persons,
     }));
-    // if payment name empty, prefill
     setPaymentInfo((p) => ({
       ...p,
       nameOnCard: currentUser?.username || p.nameOnCard,
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packageData, currentUser]);
 
-  // recalc totalPrice when persons change
   useEffect(() => {
     if (!packageData) return;
     const pricePerPerson =
@@ -98,7 +88,6 @@ export default function Booking() {
     }));
   }, [bookingData.persons, packageData]);
 
-  // increment/decrement persons safely
   const incPersons = () =>
     setBookingData((prev) => ({
       ...prev,
@@ -110,15 +99,12 @@ export default function Booking() {
       persons: Math.max(1, prev.persons - 1),
     }));
 
-  // form changes handlers
   const handleDateChange = (e) =>
     setBookingData({ ...bookingData, date: e.target.value });
   const handlePaymentChange = (e) =>
     setPaymentInfo({ ...paymentInfo, [e.target.id]: e.target.value });
 
-  // booking POST to your backend (keeps your api path, using packageId)
   const handleBookPackage = async () => {
-    // basic validation similar to original
     if (
       !bookingData.packageDetails ||
       !bookingData.buyer ||
@@ -132,10 +118,9 @@ export default function Booking() {
 
     try {
       setLoading(true);
-      // payload: keep shape the backend expects; include paymentInfo as UI-only fields
       const payload = {
         ...bookingData,
-        paymentInfo, // backend may ignore or log — this is UI-only (no real payment)
+        ...paymentInfo, // spread payment info fields to match backend keys
       };
 
       const res = await fetch(`/api/booking/book-package/${packageId}`, {
@@ -149,7 +134,6 @@ export default function Booking() {
       if (data?.success) {
         setLoading(false);
         alert(data?.message || "Booking successful!");
-        // navigate to profile (follow original logic)
         navigate(`/profile/${currentUser?.user_role === 1 ? "admin" : "user"}`);
       } else {
         setLoading(false);
@@ -162,7 +146,6 @@ export default function Booking() {
     }
   };
 
-  // helper: formatted currency
   const format = (v) => `₹${Number(v || 0).toFixed(2)}`;
 
   if (loading && !packageData)
@@ -186,9 +169,8 @@ export default function Booking() {
       </h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
-        {/* Left/Main column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Package details */}
+          {/* Package Details */}
           <Card>
             <CardHeader>
               <CardTitle>Package Details</CardTitle>
@@ -277,7 +259,7 @@ export default function Booking() {
             </CardContent>
           </Card>
 
-          {/* Guest information (disabled inputs; from currentUser) */}
+          {/* Guest Information */}
           <Card>
             <CardHeader>
               <CardTitle>Guest Information</CardTitle>
@@ -306,7 +288,7 @@ export default function Booking() {
             </CardContent>
           </Card>
 
-          {/* Payment information — simple fields only (UI) */}
+          {/* Payment Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -326,11 +308,11 @@ export default function Booking() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="expiry">Expiry (MM/YY)</Label>
+                  <Label htmlFor="expiryDate">Expiry (MM/YY)</Label>
                   <Input
-                    id="expiry"
+                    id="expiryDate" // ✅ fixed to match state & backend
                     placeholder="MM/YY"
-                    value={paymentInfo.expiry}
+                    value={paymentInfo.expiryDate}
                     onChange={handlePaymentChange}
                   />
                 </div>
@@ -365,7 +347,7 @@ export default function Booking() {
           </Card>
         </div>
 
-        {/* Sidebar / Booking summary */}
+        {/* Sidebar / Booking Summary */}
         <div className="space-y-6">
           <Card className="sticky top-6">
             <CardHeader>
