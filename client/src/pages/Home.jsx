@@ -12,12 +12,11 @@ import {
   Award,
   Home as HomeIcon,
   Utensils,
-  Plane,
   Heart,
 } from "lucide-react";
-import { FaCalendar, FaRankingStar } from "react-icons/fa6";
-import { LuBadgePercent } from "react-icons/lu";
+
 import PackageCard from "./PackageCard";
+import { Image } from "lucide-react";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -57,18 +56,11 @@ const Home = () => {
       icon: <Utensils className="h-4 w-4" />,
     },
     {
-      name: "flights",
-      label: "Explore",
-      header: "Learn, explore, travel",
-      icon: <Plane className="h-4 w-4" />,
+      name: "explore",
+      label: "Gallery",
+      header: "Discover unforgettable views",
+      icon: <Image className="h-4 w-4" />,
     },
-    // {
-    //   name: "holiday",
-    //   label: "Holiday Homes",
-    //   header: "Where to?",
-
-    //   icon: <Heart className="h-4 w-4" />,
-    // },
   ];
   const activeButton = buttons.find((btn) => btn.name === active);
 
@@ -136,7 +128,9 @@ const Home = () => {
   }, []);
 
   const handleSearch = () => {
-    navigate(`/search?searchTerm=${search}`);
+    active == "explore"
+      ? navigate(`/gallery?query=${search}`)
+      : navigate(`/search?searchTerm=${search}`);
   };
 
   return (
@@ -162,8 +156,7 @@ const Home = () => {
             ${
               active === btn.name
                 ? "bg-green-600 text-white border-green-600 hover:bg-green-600 hover:text-white"
-                : // "bg-[#002b11] text-white border[#002b11] hover:bg-[#002b11] hover:text-white"
-                  ""
+                : ""
             }`}
                   >
                     {btn.icon}
