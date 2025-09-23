@@ -13,7 +13,7 @@ It provides users with a seamless way to explore destinations, choose packages, 
 ⭐ Ratings & Reviews – Share your travel experiences and view reviews from other travelers.
 
 ER DIAGRAM:
-
+er.png
 
 
 
