@@ -11,3 +11,9 @@ It provides users with a seamless way to explore destinations, choose packages, 
 📅 Flexible Booking – Book trips by selecting dates and number of people.
 💳 Secure Payments – Pay online using card details.
 ⭐ Ratings & Reviews – Share your travel experiences and view reviews from other travelers.
+
+ER DIAGRAM:
+
+![image](https://user-images.githubusercontent.com/.../screenshot.png)
+
+
