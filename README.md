@@ -14,6 +14,6 @@ It provides users with a seamless way to explore destinations, choose packages, 
 
 ER DIAGRAM:
 
-![image](https://user-images.githubusercontent.com/.../screenshot.png)
+
 
 
