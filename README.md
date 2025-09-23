@@ -13,7 +13,7 @@ It provides users with a seamless way to explore destinations, choose packages, 
 ⭐ Ratings & Reviews – Share your travel experiences and view reviews from other travelers.
 
 ER DIAGRAM:
-https://github.com/jeevan-korah/dbms-microproject/blob/c11bef8e0ab1b79500d6a0710fb8b2faae4ccf85/er_org.jpg
+
 
 
 
