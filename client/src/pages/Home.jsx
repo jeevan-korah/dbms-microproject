@@ -129,7 +129,7 @@ const Home = () => {
   }, []);
 
   const handleSearch = () => {
-    active == "explore"
+    active == "gallery"
       ? navigate(`/gallery?query=${search}`)
       : navigate(`/search?searchTerm=${search}`);
   };
