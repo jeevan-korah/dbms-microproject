@@ -12,7 +12,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../components/ui/table"; // adjust import based on your setup
+} from "../../../components/ui/table"; // adjust import based on your setup
 
 const AllPackages = () => {
   const [packages, setPackages] = useState([]);

@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../components/ui/table"; // adjust import path if needed
+} from "../../../components/ui/table"; // adjust import path if needed
 
 const History = () => {
   const { currentUser } = useSelector((state) => state.user);

@@ -12,13 +12,6 @@ import {
   deleteUserAccountSuccess,
   deleteUserAccountFailure,
 } from "../../redux/user/userSlice";
-import {
-  getDownloadURL,
-  getStorage,
-  ref,
-  uploadBytesResumable,
-} from "firebase/storage";
-import { app } from "../../firebase";
 
 import AllBookings from "./AllBookings";
 import AdminUpdateProfile from "./AdminUpdateProfile";

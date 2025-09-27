@@ -10,7 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../components/ui/table";
+} from "../../../components/ui/table";
 
 const Payments = () => {
   const { currentUser } = useSelector((state) => state.user);

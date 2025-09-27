@@ -17,6 +17,7 @@ import {
 
 import PackageCard from "./PackageCard";
 import { Image } from "lucide-react";
+import Footer from "./components/Footer";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ const Home = () => {
       icon: <Utensils className="h-4 w-4" />,
     },
     {
-      name: "explore",
+      name: "gallery",
       label: "Gallery",
       header: "Discover unforgettable views",
       icon: <Image className="h-4 w-4" />,
@@ -153,11 +154,17 @@ const Home = () => {
                     variant="ghost"
                     onClick={() => setActive(btn.name)}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-full border 
-            ${
-              active === btn.name
-                ? "bg-green-600 text-white border-green-600 hover:bg-green-600 hover:text-white"
-                : ""
-            }`}
+          ${
+            active === btn.name
+              ? "bg-green-600 text-white border-green-600 hover:bg-green-600 hover:text-white"
+              : ""
+          }
+          ${
+            btn.name === "gallery"
+              ? "border-blue-400 shadow-lg shadow-blue-200 ring-2 ring-blue-300 ring-opacity-50"
+              : ""
+          }
+        `}
                   >
                     {btn.icon}
                     <span>{btn.label}</span>
@@ -335,7 +342,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA Section
       <section className="py-16 bg-[#002b11] text-white">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
@@ -362,7 +369,8 @@ const Home = () => {
             </Button>
           </div>
         </div>
-      </section>
+      </section> */}
+      <Footer />
     </div>
   );
 };
@@ -394,28 +402,28 @@ const features = [
   },
 ];
 
-const travelPackages = [
-  {
-    icon: MapPin,
-    title: "Adventure Package",
-    description: "Perfect for thrill-seekers and outdoor enthusiasts",
-    price: "₹45,000",
-    duration: "7 days / 6 nights",
-  },
-  {
-    icon: Heart,
-    title: "Romantic Getaway",
-    description: "Intimate experiences for couples and honeymooners",
-    price: "₹65,000",
-    duration: "5 days / 4 nights",
-  },
-  {
-    icon: Users,
-    title: "Family Fun",
-    description: "Kid-friendly activities and family accommodations",
-    price: "₹85,000",
-    duration: "6 days / 5 nights",
-  },
-];
+// const travelPackages = [
+//   {
+//     icon: MapPin,
+//     title: "Adventure Package",
+//     description: "Perfect for thrill-seekers and outdoor enthusiasts",
+//     price: "₹45,000",
+//     duration: "7 days / 6 nights",
+//   },
+//   {
+//     icon: Heart,
+//     title: "Romantic Getaway",
+//     description: "Intimate experiences for couples and honeymooners",
+//     price: "₹65,000",
+//     duration: "5 days / 4 nights",
+//   },
+//   {
+//     icon: Users,
+//     title: "Family Fun",
+//     description: "Kid-friendly activities and family accommodations",
+//     price: "₹85,000",
+//     duration: "6 days / 5 nights",
+//   },
+// ];
 
 export default Home;

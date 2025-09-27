@@ -18,6 +18,7 @@ import {
   logOutSuccess,
   logOutFailure,
 } from "../../redux/user/userSlice";
+import { Users } from "lucide-react";
 const Header = () => {
   const location = useLocation();
   const pathname = location.pathname;
@@ -27,9 +28,9 @@ const Header = () => {
 
   const navItems = [
     { to: "/search", label: "Destinations" },
-    { to: "/hotels", label: "Hotels" },
-    { to: "/reviews", label: "Restaurants" },
-    { to: "/flights", label: "Things to do" },
+    { to: "/search", label: "Hotels" },
+    { to: "/search", label: "Restaurants" },
+    { to: "/search", label: "Things to do" },
   ];
 
   const handleLogout = async () => {
@@ -114,14 +115,15 @@ const Header = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/profile/user">
-                      <User className="mr-2 h-4 w-4" />
+                      <Settings className="mr-2 h-4 w-4" />
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/settings">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                    <Link to="/about">
+                      {/* <Settings className="mr-2 h-4 w-4" /> */}
+                      <Users className="mr-2 h-4 w-4" />
+                      About
                     </Link>
                   </DropdownMenuItem>
                   {currentUser.role === "admin" && (
@@ -147,10 +149,6 @@ const Header = () => {
                 <Link to="/login">Sign in</Link>
               </Button>
             )}
-
-            {/* <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-5 w-5" />
-            </Button> */}
           </div>
         </div>
       </div>
